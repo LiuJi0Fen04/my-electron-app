@@ -1,0 +1,29 @@
+# Ignore Visual Studio & VS Code settings
+.vs/
+.vscode/
+**/.vs/
+**/.vscode/
+# Ignore common build artifacts
+*.exe
+*.obj
+*.dll
+*.pdb
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+
+# Ignore environment and secret config files
+.env
+*.config
+
+# Ignore compiled binaries and caches
+bin/
+obj/
+**/bin/
+**/obj/
+# vs cmake 
+out/
+**/out/
+
+node_modules/

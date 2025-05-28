@@ -1,0 +1,75 @@
+1. ipcRenderer.send(channel, ...args)
+    Type: Asynchronous, fire-and-forget (no response expected)
+    Usage:
+    Sends a message to the main process via a specific channel. The main process listens using ipcMain.on.
+    Example:
+        // Renderer process
+        ipcRenderer.send('asynchronous-message', 'ping')
+
+        // Main process
+        ipcMain.on('asynchronous-message', (event, arg) => {
+            console.log(arg) // prints "ping"
+        })
+    When to use:
+    When you just want to notify the main process or send data, and you don’t need a response.
+
+
+2. ipcRenderer.invoke(channel, ...args)
+    Type: Asynchronous, request-response (returns a Promise)
+    Usage:
+    Sends a message to the main process and expects a result (Promise). The main process listens using ipcMain.handle.
+    Example:
+        // Renderer process
+        const result = await ipcRenderer.invoke('some-action', 'data')
+
+        // Main process
+        ipcMain.handle('some-action', async (event, arg) => {
+            return 'result'
+        })
+    When to use:
+    When you need a response from the main process (e.g., open a dialog and get the file path).
+
+3. ipcRenderer.on(channel, listener)
+    Type: Event listener
+    Usage:
+    Listens for messages sent from the main process using event.reply or webContents.send.
+    Example:
+        // Renderer process
+        ipcRenderer.on('message-from-main', (event, arg) => {
+            console.log(arg)
+        })
+
+        // Main process
+        mainWindow.webContents.send('message-from-main', 'hello')
+
+    When to use:
+    When the main process needs to send messages to the renderer.
+
+4. ipcRenderer.once(channel, listener)
+    Type: Event listener (one-time)
+    Usage:
+    Like on, but only fires once.
+    Example:
+    ipcRenderer.once('one-time-message', (event, arg) => {
+        console.log(arg)
+    })
+
+5. ipcRenderer.removeListener(channel, listener) / ipcRenderer.off(channel, listener)
+    Type: Remove event listener
+    Usage:
+    Removes a previously added listener.
+
+6. ipcRenderer.sendSync(channel, ...args)
+    Type: Synchronous (blocks renderer until main responds)
+    Usage:
+    Sends a message to the main process and blocks until a response is received. The main process listens using ipcMain.on and responds with event.returnValue.
+    Example:
+        // Renderer process
+        const result = ipcRenderer.sendSync('synchronous-message', 'ping')
+
+        // Main process
+        ipcMain.on('synchronous-message', (event, arg) => {
+            event.returnValue = 'pong'
+        })
+    When to use:
+    Rarely! Only when you absolutely need a synchronous response (not recommended, as it can freeze the UI).

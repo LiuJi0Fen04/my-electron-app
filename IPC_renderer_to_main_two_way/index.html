@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <title>Dialog</title>
+  </head>
+  <body>
+    <button type="button" id="btn">Open a File</button>
+    <!-- <strong>: This is an HTML tag used to make text bold (semantically, it means "strong importance"). -->
+    <p>File path: <strong id="filePath"></strong></p>
+    <script src='./renderer.js'></script>
+  </body>
+</html>
