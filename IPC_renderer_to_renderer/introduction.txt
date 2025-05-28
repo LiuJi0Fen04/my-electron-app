@@ -1,0 +1,7 @@
+There's no direct way to send messages between renderer processes in Electron using the ipcMain and 
+ipcRenderer modules. To achieve this, you have two options:
+
+* Use the main process as a message broker between renderers. This would involve sending a message 
+from one renderer to the main process, which would forward the message to the other renderer.
+* Pass a MessagePort from the main process to both renderers. This will allow direct communication 
+between renderers after the initial setup.

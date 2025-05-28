@@ -13,6 +13,8 @@ function createWindow () {
       label: app.name,
       submenu: [
         {
+          // arrow function (a concise wey to write a function in JavaScript)
+          // 'update-counter' is the channel name(a string identifier for the type of message)
           click: () => mainWindow.webContents.send('update-counter', 1),
           label: 'Increment'
         },
@@ -22,7 +24,6 @@ function createWindow () {
         }
       ]
     }
-
   ])
 
   Menu.setApplicationMenu(menu)
