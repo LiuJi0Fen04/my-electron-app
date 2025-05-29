@@ -2,11 +2,16 @@ const { app, BrowserWindow, ipcMain } = require('electron/main')
 const path = require('node:path')
 const createWindow = () => {
   const win = new BrowserWindow({
+    show: false,
     width: 800,
     height: 600,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
     }
+  })
+  win.once('ready-to-show', () => {
+    console.log("main ready")
+    win.show();
   })
   // devTools
   win.webContents.openDevTools()

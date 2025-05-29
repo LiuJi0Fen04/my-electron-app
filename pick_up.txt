@@ -1,0 +1,20 @@
+1. IPC_renderer_to_main:
+    contextBridge
+    ipcRenderer.send
+    ipcMain.on
+
+2. IPC_renderer_to_main_two_way:
+    ipcMain.handle
+    ipcRenderer.invoke
+
+3. IPC_main_to_renderer:
+    callback function
+
+4. MessagePorts in electron
+    1) setting up a MessageChannel between two renderers
+        Why can a message sent to port1 be received by port2?
+        * MessageChannel creates a pair of connected ports: port1 and port2.
+        * These two ports are like the two ends of a private pipe or tunnel.
+        * Any message sent to one port will be received by the other port.
+
+        
