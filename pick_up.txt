@@ -12,9 +12,42 @@
 
 4. MessagePorts in electron
     1) setting up a MessageChannel between two renderers
+        MessageChannelMain
         Why can a message sent to port1 be received by port2?
         * MessageChannel creates a pair of connected ports: port1 and port2.
         * These two ports are like the two ends of a private pipe or tunnel.
         * Any message sent to one port will be received by the other port.
 
+    2) Worker process
+        if contextIsolation is enabled there will be 'Uncaught ReferenceError: 
+        require is not defined at XXXX' when calling require in the renderer 
+        or html, so in window webPreferences define {cosntextIsolation: false};
+        this will cause security warning
+
+        In real apps, use a worker process for heavy, blocking, or parallelizable 
+        tasks, or when you need to share work between multiple windows.
+        a. CPU-Intensive or Blocking Tasks
+        If your app needs to perform heavy computations (e.g., image processing, 
+        data parsing, encryption), doing this in the main renderer process would 
+        freeze the UI and make the app unresponsive.Offloading such work to a 
+        worker process keeps the UI smooth and responsive.
         
+        b. Parallelism
+        JavaScript in the renderer process is single-threaded. Worker processes 
+        allow you to run code in parallel, making better use of multi-core CPUs.
+        
+        c. Isolation
+        You may want to isolate certain tasks for security or stability. If a 
+        worker crashes, it won’t take down your main window.
+        
+        d. Access to Browser APIs
+        Electron’s worker processes (hidden BrowserWindows) have access to full 
+        browser APIs (like <canvas>, audio, fetch, etc.), which Node.js worker 
+        threads do not.
+        
+        e. Handling Multiple Clients
+        If your app has multiple windows or tabs that need to share a background
+        task (like a shared database, or a real-time data feed), a worker 
+        process can act as a central hub.
+    3) Reply streams
+    

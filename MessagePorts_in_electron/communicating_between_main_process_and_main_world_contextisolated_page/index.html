@@ -1,5 +1,8 @@
+<title>communicating directly between the main process and the main world of a context-isolated page</title>
 <script>
+    console.log('get')
     window.onmessage = (event) => {
+      console.log('get message from main process')
       // event.source === window means the message is coming from the preload
       // script, as opposed to from an <iframe> or other source.
       if (event.source === window && event.data === 'main-world-port') {
@@ -12,4 +15,4 @@
         }
       }
     }
-    </script>
+</script>

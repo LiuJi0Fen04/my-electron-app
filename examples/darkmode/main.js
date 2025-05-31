@@ -1,28 +1,32 @@
-const { app, BrowserWindow, ipcMain } = require('electron/main')
+const { app, BrowserWindow, ipcMain, nativeTheme } = require('electron/main')
 const path = require('node:path')
-const createWindow = () => {
+
+function createWindow () {
   const win = new BrowserWindow({
-    show: false,
     width: 800,
     height: 600,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
     }
   })
-  win.once('ready-to-show', () => {
-    console.log("main ready")
-    win.show();
-  })
-  // devTools
+
   win.loadFile('index.html')
-  win.webContents.openDevTools()
-//   win.loadURL('https://github.com')
-//   const contents = win.webContents
-//   console.log(contents)
 }
 
+ipcMain.handle('dark-mode:toggle', () => {
+  if (nativeTheme.shouldUseDarkColors) {
+    nativeTheme.themeSource = 'light'
+  } else {
+    nativeTheme.themeSource = 'dark'
+  }
+  return nativeTheme.shouldUseDarkColors
+})
+
+ipcMain.handle('dark-mode:system', () => {
+  nativeTheme.themeSource = 'system'
+})
+
 app.whenReady().then(() => {
-  ipcMain.handle('ping', () => 'pong')
   createWindow()
 
   app.on('activate', () => {

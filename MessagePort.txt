@@ -1,0 +1,4 @@
+reply streams
+    Electron's built-in IPC methods only support two modes: fire-and-forget (e.g. send), 
+    or request-response (e.g. invoke). Using MessageChannels, you can implement a "response 
+    stream", where a single request responds with a stream of data.

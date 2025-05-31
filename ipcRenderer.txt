@@ -1,3 +1,7 @@
+general: electron' built in IPC only support two modes: fire and forget(e.g. send), or request-response
+        (e.g. invoke)
+
+
 1. ipcRenderer.send(channel, ...args)
     Type: Asynchronous, fire-and-forget (no response expected)
     Usage:
