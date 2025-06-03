@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <title>shortcuts within a BrowserWindow!</title>
+  </head>
+  <body>
+    <h1>Shortcuts within a BrowserWindow!</h1>
+
+    <p>Hit any key with this window focused to see it captured here.</p>
+    <div><span>Last Key Pressed: </span><span id="last-keypress"></span></div>
+    <script src="./renderer.js"></script>
+  </body>
+</html>
+
+
+<!-- 
+| Element                            | Role                                                   |
+| ---------------------------------- | ------------------------------------------------------ |
+| `<div>`                            | Groups the label and the dynamic value together        |
+| First `<span>`                     | Static label text ("Last Key Pressed:")                |
+| Second `<span id="last-keypress">` | Dynamic content area to display the actual key pressed | -->

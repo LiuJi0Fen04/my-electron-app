@@ -1,0 +1,61 @@
+1. my_protocal:// ← contains underscore (not compliant with URI standard)
+
+
+
+
+2. 🧠 What is useCapture?
+    In the DOM, events go through three phases:
+        1.Capture phase – from the outermost parent down to the target
+        2.Target phase – the event hits the actual target element
+        3.Bubble phase – event bubbles back up to the parent elements
+    By default, addEventListener listens in the bubble phase (step 3).
+    If you pass true as the 3rd argument, you switch to capture phase (step 1).
+
+
+    ✅ Example: useCapture = true vs false
+        🧾 HTML
+            <div id="outer" style="padding: 20px; background: lightblue;">
+            Outer Div
+            <div id="inner" style="padding: 20px; background: lightgreen;">
+                Inner Div
+            </div>
+            </div>
+            
+        🧠 JavaScript:
+            js
+
+            const outer = document.getElementById('outer');
+            const inner = document.getElementById('inner');
+
+            outer.addEventListener('click', () => {
+            console.log('Outer DIV - capture phase');
+            }, true); // <-- useCapture = true
+
+            outer.addEventListener('click', () => {
+            console.log('Outer DIV - bubble phase');
+            }, false); // <-- useCapture = false (default)
+
+            inner.addEventListener('click', () => {
+            console.log('Inner DIV clicked');
+            });
+
+        ▶️ What Happens When You Click the Inner Div?
+            1. Capture Phase (Top → Bottom):
+                Outer DIV - capture phase → ✅ This fires first
+            2. Target Phase:
+                Inner DIV clicked
+            3. Bubble Phase (Bottom → Top):
+                Outer DIV - bubble phase → ✅ This fires last
+
+    🧪 Console Output:
+        bash
+            Outer DIV - capture phase
+            Inner DIV clicked
+            Outer DIV - bubble phase
+
+    🔍 Why use useCapture?
+    Use it when:
+        You want to intercept events early, before children handle them
+        You're building complex UI where bubbling might cause bugs
+        You need priority handling of user interactions
+

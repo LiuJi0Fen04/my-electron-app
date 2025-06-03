@@ -51,3 +51,20 @@
         process can act as a central hub.
     3) Reply streams
     
+
+5. menu
+    | Feature          | `buildFromTemplate()`        | `menu.append()`                   |
+    | ---------------- | ---------------------------- | --------------------------------- |
+    | Syntax           | Declarative (array template) | Imperative (step-by-step)         |
+    | Readability      | High — good for static menus | Medium — better for dynamic menus |
+    | Supports nesting | ✅ via `submenu`             | ✅ via `submenu`                 |
+    | Use case         | Common/default choice        | Special/dynamic scenarios         |
+    | Maintenance      | Easier                       | Harder for large menus            |
+
+
+    | Type       | Static Menu           | Dynamic Menu                         |
+    | ---------- | --------------------- | ------------------------------------ |
+    | Defined    | Once at startup       | Generated/modified at runtime        |
+    | Changes    | No                    | Yes, based on state or conditions    |
+    | Simplicity | Simple, clean         | More flexible, but harder to manage  |
+    | Tool       | `buildFromTemplate()` | `append()`, or programmatic template |
