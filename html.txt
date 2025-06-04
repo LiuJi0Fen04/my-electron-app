@@ -59,3 +59,6 @@
         You're building complex UI where bubbling might cause bugs
         You need priority handling of user interactions
 
+3. ondragstart
+    ondragstart is a built-in event handler property in the DOM (Document Object Model). It's part of the HTML Drag 
+    and Drop API and is triggered when the user starts dragging an element.
