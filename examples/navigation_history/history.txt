@@ -1,0 +1,62 @@
+1. how  did the history been push into navigationHistory
+    Great question! The history is managed by Electron’s built-in navigationHistory API, which is part of the webContents object of your BrowserView.
+    How history is pushed:
+    Whenever you navigate to a new URL (using view.webContents.loadURL(url) or by user actions like clicking links, submitting forms, or using the browser’s history API), Electron automatically updates the navigation history for that webContents instance.
+    You do not need to manually push entries into the history stack. Electron tracks all navigations internally, just like a regular browser.
+    In your code:
+    When you call view.webContents.loadURL(url) (from the renderer via IPC), Electron loads the new page and automatically adds this navigation to the history stack.
+    When the user navigates using in-page links, form submissions, or JavaScript (like window.history.pushState), Electron also updates the history stack.
+    The navigationHistory object (accessed as view.webContents.navigationHistory) provides methods to:
+    Go back/forward
+    Get all entries
+    Check if you can go back/forward
+    Example from your code:
+    Apply to history.txt
+    This triggers a navigation, and Electron automatically pushes the new URL into the navigation history.
+    Summary:
+    You do not manually push history entries.
+    Electron’s webContents manages the navigation history for you, just like a web browser. Every navigation (via loadURL, user action, or in-page navigation) is tracked and stored in the navigationHistory stack.
+    If you want to see or manipulate the history, you use the API methods provided by Electron, but you don’t need to push entries yourself.
+
+
+
+2. can i push some history into navigationHistory before i actually navigate some site
+
+    No, you cannot manually push arbitrary entries into Electron's navigationHistory before actually navigating to those sites.
+    Why?
+    The navigationHistory API in Electron is read-only for history entries:
+    It reflects the actual navigation actions that have occurred in the webContents.
+    There is no method like pushEntry or addEntry in the Electron API.
+    The only way to add an entry to the navigation history is to actually navigate to that URL using loadURL or by user navigation within the page.
+    What you can do:
+    Programmatically navigate to a series of URLs (using loadURL in sequence), which will populate the history stack as if a user had visited those pages.
+    You cannot "preload" or "inject" history entries without real navigation.
+    Workarounds (if you need custom history):
+    Maintain your own custom history stack in your app’s code if you need to simulate or display a history that doesn’t match the real navigation.
+    But the built-in back/forward navigation and the navigationHistory object will always reflect the actual navigation events that have occurred in the webContents.
+    Summary:
+    You cannot push history entries into Electron’s navigationHistory without real navigation. The history is built up only by actual navigations performed by the webContents. If you need more control, you must implement your own custom history logic.
+
+3. why this forbiden 
+
+    This restriction exists for several important reasons related to security, consistency, and browser behavior:
+    1. Security
+    Allowing arbitrary history injection could be abused by malicious code to spoof a user’s browsing history, making phishing or other attacks easier.
+    Browsers (and Electron, which is built on Chromium) are designed to prevent scripts from faking navigation history, which could mislead users about where they’ve been or what they’ve done.
+    2. Consistency with Browser Standards
+    Electron’s webContents is designed to behave like a real browser tab.
+    In all major browsers, you cannot arbitrarily add entries to the navigation history without actually navigating. This ensures that the back/forward buttons always reflect real user or programmatic navigation events.
+    3. Navigation Integrity
+    The navigation history is tightly coupled with the actual state of the web page (DOM, scripts, etc.).
+    If you could inject history entries, the browser would not know what state to restore if the user pressed “back” to a fake entry—there would be no real page or state to return to.
+    4. User Experience
+    Users expect the back/forward buttons to work in a predictable way, reflecting their real navigation path.
+    Allowing fake entries would break this expectation and could lead to confusion or a broken browsing experience.
+    Summary:
+    Electron (and browsers in general) forbid manual history injection to protect users, maintain security, and ensure the navigation system always matches the real state of the application. If you need to simulate history, you must manage it yourself, but the browser’s own navigation stack will always reflect real navigations only.
+
+
+
+
+所以navigationHistory只能作为某次用户操作中的操作流程的回退
+并不能用来存储历史记录(自己新建一个div，使用appendChild进行插入)

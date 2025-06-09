@@ -16,9 +16,11 @@ function createWindow () {
 
   const view = new BrowserView()
   mainWindow.setBrowserView(view)
-  view.setBounds({ x: 0, y: 100, width: 1000, height: 800 })
-  view.setAutoResize({ width: true, height: true })
+  view.setBounds({ x: 0, y: 500, width: 1000, height: 200 })
+  view.setAutoResize({ width: true, height: false })
 
+
+  // navigationHistory class allows you to manage and interact with browsing history of your electron app 
   const navigationHistory = view.webContents.navigationHistory
   ipcMain.handle('nav:back', () =>
     navigationHistory.goBack()
@@ -38,13 +40,18 @@ function createWindow () {
     return navigationHistory.getAllEntries()
   })
 
+  // this event is a built in event 
   view.webContents.on('did-navigate', () => {
+    console.log('completely new url')
     mainWindow.webContents.send('nav:updated')
   })
 
+  // this event is also a built in event
   view.webContents.on('did-navigate-in-page', () => {
+    console.log('in page url')
     mainWindow.webContents.send('nav:updated')
   })
+  mainWindow.webContents.openDevTools({mode: 'detach'})
 }
 
 app.whenReady().then(createWindow)
@@ -74,3 +81,37 @@ app.on('activate', () => {
 // ⚠️ Security Tip:
 // Always be careful when loading remote URLs. Use contextIsolation, disable nodeIntegration, 
 // and control permissions to avoid exposing your app to security risks.
+
+
+
+// | Feature                | `BrowserWindow` (`mainWindow`) | `BrowserView` (`view`)          |
+// | ---------------------- | ------------------------------ | ------------------------------- |
+// | Is a top-level window? | ✅ Yes                         | ❌ No                          |
+// | Can display web pages? | ✅ Yes                         | ✅ Yes                         |
+// | Has window frame/menu? | ✅ Yes                         | ❌ No                          |
+// | Can embed other views? | ✅ Yes                         | ❌ No                          |
+// | Typically used for...  | Main app window                | Embedding content into a window |
+// | Has system-level frame/chrome   | ✅ Yes                            | ❌ No                            |
+// | OS resource usage (e.g. memory) | 🟥 Higher (due to native window) | 🟨 Lower (no native window)     |
+
+
+
+
+// did-navigate
+//   Fires when: The user navigates to a completely new page (the main URL changes).
+//   Examples:
+//   Going from https://example.com to https://google.com
+//   Reloading the page
+//   Clicking a link that loads a new document
+
+// did-navigate-in-page
+//   Fires when: The user navigates within the same page (the main URL stays the same, but the hash or history state changes).
+//   Examples:
+//   Going from https://example.com#section1 to https://example.com#section2
+//   Using history.pushState() or history.replaceState() in a single-page app (SPA) to change the URL without a full reload
+
+// Summary Table:
+//   | Event                  | Full page load | Hash/history API change |
+//   |------------------------|:--------------:|:-----------------------:|
+//   | did-navigate           | ✅             | ❌                     |
+//   | did-navigate-in-page   | ❌             | ✅                     |
