@@ -1,0 +1,12 @@
+body {
+    margin: 0;
+}
+
+.titlebar {
+  height: 30px;
+  background: #2f3241;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
