@@ -102,7 +102,7 @@ button:disabled { cursor: not-allowed; }
 When a button is disabled, the cursor changes to a “not allowed” symbol, signaling it can’t be clicked.
 
 #historyPanel div { cursor: pointer; }
-Each history entry in the panel shows a pointer cursor, indicating it’s interactive.
+Each history entry in t he panel shows a pointer cursor, indicating it’s interactive.
 
 Why Cursor Styles Matter:
 User Feedback:
