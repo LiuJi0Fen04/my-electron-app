@@ -16,3 +16,22 @@ app.whenReady().then(() => {
   tray.setToolTip('This is my application.')
   tray.setContextMenu(contextMenu)
 })
+
+
+
+
+// //  convert image to base64
+// const fs = require('fs');
+// const path = require('path');
+
+// // Set your image path
+// const imagePath = 'path/to/image.png';
+// const ext = path.extname(imagePath).slice(1); // e.g., 'png'
+
+// const imageBuffer = fs.readFileSync(imagePath);
+// const base64Data = imageBuffer.toString('base64');
+
+// // Create Data URL
+// const dataURL = `data:image/${ext};base64,${base64Data}`;
+
+// console.log(dataURL); // You can use this in Electron
