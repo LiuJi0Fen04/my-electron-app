@@ -1,0 +1,71 @@
+body {
+  font-family: sans-serif;
+  text-align: center;
+  margin: 20px;
+}
+
+button {
+  padding: 10px 20px;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+
+/* uses flexbox to arrange images dynamically */
+#image-container {
+  display: flex;
+  /* enables wrapping, ensures image align properly even when then container resizes */
+  flex-wrap: wrap;
+  /* adds a gap betweem images for a clean spaced-out look */
+  gap: 10px;
+  /* centers images horizontally */
+  justify-content: center;
+}
+
+.thumb {
+  width: 100px;
+  height: auto;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.thumb:hover {
+  transform: scale(1.1); /* Enlarges the image slightly on hover */
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Adds a soft shadow */
+}
+
+
+/* For the large image preview */
+#image-preview {
+  position: fixed;
+  top: 50%;
+  left: 0;
+  width: 50%;
+  height: 50%;
+  background-color: rgba(0,0,0,0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+#image-preview img {
+  max-width: 80%;
+  max-height: 80%;
+  border: 5px solid white;
+  box-shadow: 0 0 20px black;
+  border-radius: 8px;
+}
+
+#close-preview {
+  position: absolute;
+  top: 30px;
+  right: 40px;
+  font-size: 32px;
+  color: white;
+  cursor: pointer;
+}
+
+.hidden {
+  display: none;
+}

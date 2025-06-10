@@ -1,0 +1,95 @@
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: flex;
+    /* flex-direction: column; */
+    flex-direction: row;
+    height: 100vh;
+    background-color: #2c2c2c;
+    color: #f1f1f1;
+}
+
+#main-image-container {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    padding: 20px;
+}
+
+#main-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 5px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+#thumbnail-container-horizon {
+    flex-shrink: 0;
+    height: 120px;
+    background-color: #1e1e1e;
+    border-top: 1px solid #444;
+    padding: 10px;
+    display: flex;
+    overflow-x: auto; /* 关键：允许横向滚动 */
+    overflow-y: hidden;
+    gap: 10px; /* 缩略图之间的间距 */
+}
+
+#thumbnail-container {
+    flex-shrink: 0;
+    width: 120px;
+    background-color: #1e1e1e;
+    border-left: 1px solid #444;
+    padding: 10px;
+    display: flex;
+    flex-direction: column; /*Add to stack thumbnails vertically */
+    overflow-x: hidden; /* 关键：允许横向滚动 */
+    overflow-y: auto;
+    gap: 10px; /* 缩略图之间的间距 */
+}
+
+
+
+/* 美化滚动条 */
+#thumbnail-container::-webkit-scrollbar {
+    height: 8px;
+    /* width: 8px; */
+}
+
+#thumbnail-container::-webkit-scrollbar-track {
+    background: #333;
+}
+
+#thumbnail-container::-webkit-scrollbar-thumb {
+    background: #666;
+    border-radius: 4px;
+}
+
+#thumbnail-container::-webkit-scrollbar-thumb:hover {
+    background: #888;
+}
+
+.thumbnail {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+    align-self: center;  /*center thumbnails within the container*/
+}
+
+.thumbnail:hover {
+    border-color: #00aaff;
+    transform: scale(1.05);
+}
+
+/* it is a CSS class that you can manually assign to an element, used to visually highlight the selected thumbnail by changing its boarder color and add a box shadow */
+.thumbnail.active {
+    border-color: #007acc;
+    box-shadow: 0 0 10px #007acc;
+}
