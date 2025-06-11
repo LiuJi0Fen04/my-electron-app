@@ -68,7 +68,9 @@ body {
     border-radius: 4px;
 }
 
-#thumbnail-container::-webkit-scrollbar-thumb:hover {
+#thumbnail-container::-webkit-scrollbar-t
+
+humb:hover {
     background: #888;
 }
 

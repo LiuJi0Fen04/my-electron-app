@@ -1,0 +1,16 @@
+
+Advanced Optimizations (Next Steps): when dealing with large image collections 
+
+    If you are dealing with extremely large image collections (tens of thousands) or very high-resolution RAW files, you could go even further:
+
+        Virtual Scrolling: A more advanced technique where you only create DOM elements for the visible items. As you scroll, you recycle these few 
+            DOM elements and just change their data-src and src attributes. This is the most memory-efficient solution for the DOM but is more 
+            complex to implement.
+
+        Generate and Cache Thumbnails: The ultimate solution for performance. Instead of loading multi-megabyte original files into the thumbnail 
+            preview, you can have your Electron main process generate small, fast-loading JPEG thumbnails in the background.
+            
+            steps:
+                When a folder is opened, the main process can use a library like sharp to create small thumbnail versions of each image.
+                These thumbnails are saved to a cache directory (e.g., inside app.getPath('userData')).
+                Your renderer process then loads these tiny, pre-made thumbnails, which is incredibly fast and uses minimal memory.
