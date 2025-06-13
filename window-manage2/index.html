@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Electron Split View</title>
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Left Panel -->
+        <div class="panel left-panel">
+            <div class="controls">
+                <h2>Left Panel</h2>
+                <button id="toggle-left-btn">Open Left View</button>
+            </div>
+            <div class="content-area">
+                <p>This is the host area for the left child view.</p>
+            </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="panel right-panel">
+            <div class="controls">
+                <h2>Right Panel</h2>
+                <button id="toggle-right-btn">Open Right View</button>
+            </div>
+            <div class="content-area">
+                 <p>This is the host area for the right child view.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- You can also require other files to run in this process -->
+    <script src="./renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>main Window</title>
+  </head>
+  <body>
+    <h1>main Window</h1>
+    <button id="showChild1">Toggle child1 show status</button>
+    <button id="showChild2">Toggle child2 show status</button>
+    <script>
+      document.getElementById('showChild1').addEventListener('click', () => {
+        window.electronAPI.openchild('child1');
+      });
+      document.getElementById('showChild2').addEventListener('click', () => {
+        window.electronAPI.openchild('child2');
+      });
+      // window.electronAPI.onReply((message) => {
+      //   console.log('Received reply from child:', message);
+      // });
+    </script>
+  </body>
+</html>

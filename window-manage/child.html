@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Child1 Window</title>
+  </head>
+  <body>
+    <h1>Child1 Window</h1>
+    <button id="sendMessageBtn">Send Message to Main</button>
+    <script>
+      document.getElementById('sendMessageBtn').addEventListener('click', () => {
+        window.electronAPI.sendMessage('Hello from child1 window');
+      });
+
+      window.electronAPI.onReply((message) => {
+        console.log('Received reply from main:', message);
+      });
+    </script>
+  </body>
+</html>
