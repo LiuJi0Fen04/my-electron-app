@@ -15,7 +15,9 @@ body, html {
 }
 
 .panel {
-    flex: 1; /* Each panel takes up half the space */
+    /* Each panel takes up half the space */
+    /* flex: 1;  repalced by flex-basis and flex-grow in js*/
+    min-width: 100px;
     /* adding internal spacing for content */
     padding: 20px;
     /* ensures padding is included in the element's total width and height */
@@ -30,12 +32,31 @@ body, html {
 .left-panel {
     background-color: #f0f4f8;
     /* creates a clean seperation from adjacent elements */
-    border-right: 2px solid #d0d8e0;
+    /* border-right: 2px solid #d0d8e0; */
+    flex-basis: 50%;
 }
 
 .right-panel {
     background-color: #f8f4f0;
+    /* takes the remaining space */
+    flex-grow: 1; 
 }
+
+/* resizer handle */
+.resizer {
+    /*width of resizer */
+    flex-basis: 2px; 
+    flex-shrink: 0;
+    background-color: #b0bec5;
+    cursor: col-resizer;
+    transition: background-color 0.2s;
+}
+
+.resizer:hover {
+    background-color: #78909c;
+}
+
+
 
 .controls {
     padding-bottom: 15px;
