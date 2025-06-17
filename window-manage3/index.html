@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Electron Split View</title>
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- The button to toggle the side panel, now always visible -->
+    <button id="toggle-side-panel-btn" title="Toggle Side Panel" class="toggle-side-panel-button">☰</button>
+    <!-- <button onclick="window.api.hello()">Call DLL Hello</button> -->
+
+    
+    <!-- Side Panel container, which will slide in and out -->
+    <div class="side-panel-container" id="side-panel-container">
+        <div class="side-panel" id="side-panel">
+            <button onclick="addon.hello()">Call DLL Hello</button>
+
+            <h3>Side Panel</h3>
+            <p>This is a hideable side panel.</p>
+            <!-- Button to close the side panel directly -->
+            <button id="close-side-panel-btn">Close Panel</button>
+        </div>
+    </div>
+
+    <!-- Main content container for left and right panels -->
+    <div class="container" id="main-content-container">
+        <!-- Left Panel -->
+        <div class="panel left-panel">
+            <div class="controls">
+                <h2>Left Panel</h2>
+                <button id="toggle-left-btn">Open Left View</button>
+            </div>
+            <div class="content-area">
+                <p>This is the host area for the left child view.</p>
+            </div>
+        </div>
+        
+        <!-- Resizer Handle for adjusting panel widths -->
+        <div class="resizer" id="resizer"></div>
+
+        <!-- Right Panel -->
+        <div class="panel right-panel">
+            <div class="controls">
+                <h2>Right Panel</h2>
+                <button id="toggle-right-btn">Open Right View</button>
+            </div>
+            <div class="content-area">
+                 <p>This is the host area for the right child view.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Renderer process script for handling UI interactions -->
+    <script src="./renderer.js"></script>
+</body>
+</html>

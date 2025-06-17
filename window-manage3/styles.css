@@ -1,0 +1,151 @@
+/* styles.css */
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden; /* ensures no unwanted scrollbars */
+    position: relative; /* Allows absolute positioning of child elements */
+}
+
+
+
+
+/* Styles for the button that toggles the side panel */
+.toggle-side-panel-button {
+    position: fixed; /* Keep it fixed on the screen */
+    top: 10px; /* Distance from the top */
+    left: 10px; /* Distance from the left */
+    z-index: 100; /* Ensure it's above other elements */
+    padding: 8px 12px;
+    background-color: #546e7a;
+    color: white; /* White text */
+    border: none;
+    border-radius: 70%;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: background-color 0.3s ease;
+}
+
+.toggle-side-panel-button:hover {
+    background-color: #22353e;
+}
+
+/* Side Panel container, positioned absolutely */
+.side-panel-container {
+    position: absolute;
+    top: 0;
+    left: 0; /* Default visible position */
+    width: 250px; /* Fixed width of the side panel */
+    height: 100%; /* Full height of the body */
+    background-color: #f5f5f5;
+    border-right: 1px solid #ddd;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    z-index: 10; /* Ensure it's above the main content */
+    transition: left 0.3s ease-in-out; /* Smooth transition for sliding */
+    display: flex; /* Flexbox for internal content */
+    flex-direction: column;
+    padding: 10px;
+    box-sizing: border-box; /* Include padding in width */
+}
+
+/* Class to hide the side panel */
+.side-panel-container.hidden {
+    left: -260px; /* Move off-screen to the left (width + border/shadow margin) */
+}
+
+/* Styles for the inner content of the side panel */
+.side-panel {
+    width: 100%;
+    height: 100%;
+    background-color: #e0e0e0;
+    padding: 15px;
+    box-sizing: border-box; /* Include padding in element's total width/height */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Pushes close button to bottom */
+    align-items: center;
+    border-radius: 8px;
+}
+
+/* Main content container (left panel, resizer, right panel) */
+.container {
+    position: absolute; /* Positioned absolutely to manage its left offset */
+    top: 0;
+    left: 250px; /* Initial left offset when side panel is open */
+    width: calc(100% - 250px); /* Initial width when side panel is open */
+    height: 100%;
+    display: flex;
+    transition: left 0.3s ease-in-out, width 0.3s ease-in-out; /* Smooth transition for movement/resizing */
+}
+
+/* General panel styles */
+.panel {
+    min-width: 100px;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* Specific styles for the left panel */
+.left-panel {
+    background-color: #f0f4f8;
+    flex-basis: 50%; /* Initial width for the left panel */
+}
+
+/* Specific styles for the right panel */
+.right-panel {
+    background-color: #f8f4f0;
+    flex-grow: 1; /* Allows right panel to take remaining space */
+}
+
+/* Styles for the resizer handle */
+.resizer {
+    flex-basis: 2px; /* Width of the resizer */
+    flex-shrink: 0;
+    background-color: #b0bec5;
+    cursor: col-resizer; /* Cursor indicating horizontal resizing */
+    transition: background-color 0.2s; /* Smooth transition on hover */
+}
+
+.resizer:hover {
+    background-color: #78909c; /* Darker color on hover */
+}
+
+/* Styles for control sections within panels */
+.controls {
+    padding-bottom: 15px;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 15px;
+}
+
+/* Heading styles */
+h2 {
+    margin-top: 0;
+}
+
+/* Button styles (general) */
+button {
+    font-size: 14px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid #a0a0a0;
+    cursor: pointer;
+    background-color: #fff;
+    transition: background-color 0.2s; /* Smooth transition on hover */
+}
+
+button:hover {
+    background-color: #e9e9e9; /* Lighter background on hover */
+}
+
+/* Styles for content areas within panels */
+.content-area {
+    background-color: rgba(0,0,0,0.05);
+    border-radius: 8px;
+    padding: 15px;
+    flex-grow: 1; /* Allows content area to expand */
+}

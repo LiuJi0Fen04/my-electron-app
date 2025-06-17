@@ -8,9 +8,30 @@ const { ipcRenderer } = require('electron');
 document.addEventListener('DOMContentLoaded', () => {
     const toggleLeftBtn = document.getElementById('toggle-left-btn');
     const toggleRightBtn = document.getElementById('toggle-right-btn');
+
     const resizer = document.getElementById('resizer');
     const leftPanel = document.getElementsByClassName('left-panel')[0];
     const rightPanel = document.getElementsByClassName('right-panel')[0];
+    const leftContentArea = document.getElementById('left-content-area');
+    const rightContentArea = document.getElementById('right-content-area');
+
+    const mainSidePanel = document.getElementById('main-side-panel');
+    const contentContainer = document.getElementById('container');
+    const toggleMainPanelBtn = document.getElementById('toggle-main-panel-btn');
+
+
+    // Listener for the global side panel toggle
+    toggleMainPanelBtn.addEventListener('click', () => {
+        console.log('side panel toggle')
+        const isCollapsed = mainSidePanel.classList.toggle('collapsed');
+        contentContainer.classList.toggle('panel-collapsed');
+        
+        // Adjust button position
+        toggleMainPanelBtn.style.left = isCollapsed ? '10px' : '230px';
+
+        // Update BrowserView bounds after the transition
+        setTimeout(notifyMainProcessOfLayoutChange, 300); // Match CSS transition time
+    });
 
     // --- Button Click Handlers ---
     toggleLeftBtn.addEventListener('click', () => {
@@ -31,16 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isResizing = true;
         // Add event listeners to the document to handle dragging anywhere on the page
         document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', () => {
-            console.log('mouse up');
-            isResizing = false;
-            // Remove the listeners when the mouse is released
-            document.removeEventListener('mousemove', handleMouseMove); // if you add it, you manage it
-            // Optional: Add a class to show the body is not being selected
-            document.body.style.cursor = 'default';
-            document.body.style.userSelect = 'auto';
-
-        });
+        document.addEventListener('mouseup', handleMouseUp);
         // Optional: Add a class to show dragging is in progress
         document.body.style.cursor = 'col-resize';
         document.body.style.userSelect = 'none';
@@ -50,18 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // console.log('mouse move')
         if (!isResizing) return;
 
-
-        console.log('Mouse move, elements:', {
-            leftPanel: !!leftPanel,
-            rightPanel: !!rightPanel,
-            resizer: !!resizer
-        });
-
-        
         // Calculate the new width for the left panel based on mouse position
         const container = resizer.parentNode;
         const containerRect = container.getBoundingClientRect();
-        // e.clientX is the left edge of the container in the view point
         const newLeftWidth = e.clientX - containerRect.left;
 
         // Apply the new widths to the panels
@@ -77,29 +80,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalWidth = container.clientWidth;
         const rightWidth = totalWidth - newLeftWidth - resizer.offsetWidth;
 
-        ipcRenderer.send('update-view-bounds', {
-            left: newLeftWidth,
-            right: rightWidth
-        });
+        notifyMainProcessOfLayoutChange(newLeftWidth, rightWidth);
     }
+
+    function handleMouseUp() {
+        isResizing = false;
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.body.style.cursor = 'default';
+        document.body.style.userSelect = 'auto';
+    }
+
+
 
     // Listen for the main window resize event
     ipcRenderer.on('window-resized', () => {
         // When the window is resized, we need to tell the main process
         // the current widths of our panels so the BrowserViews can be adjusted correctly.
-        console.log('heard window-resized event')
         const container = resizer.parentNode;
         const totalWidth = container.clientWidth;
         const leftWidth = leftPanel.offsetWidth;
         const rightWidth = totalWidth - leftWidth - resizer.offsetWidth;
-
-        ipcRenderer.send('update-view-bounds', {
-            left: leftWidth,
-            right: rightWidth
-        });
+        notifyMainProcessOfLayoutChange(leftWidth, rightWidth);
     });
+
+    function notifyMainProcessOfLayoutChange(leftWidth, rightWidth) {
+        ipcRenderer.send('update-view-bounds', {
+          left: leftWidth,
+          right: rightWidth
+        });
+    }
 });
-
-
-
-

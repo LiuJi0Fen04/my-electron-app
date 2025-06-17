@@ -19,6 +19,12 @@ let panelWidths = {
   right: null,
 };
 
+let viewBounds ={
+  leftView: null,
+  rightView: null,
+};
+
+
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
@@ -70,10 +76,8 @@ ipcMain.on('toggle-left-view', () => {
   if (!mainWindow) return;
   
   const [windowWidth, windowHeight] = mainWindow.getContentSize();
-  // logical or, if the first value is undefined, null, 0, or any other falsy value, then the first value will be set as the second
-  // if 0 is the valid value, using the nullish coalescing operator (??)
-  const leftPanelWidth = panelWidths.left || (windowWidth / 2); 
-  const viewHeight = windowHeight - 180; // Account for padding 
+  const leftPanelWidth = panelWidths.left || (windowWidth / 2);
+  const viewHeight = windowHeight - 180; // Account for the button area
 
   if (leftView) {
     mainWindow.removeBrowserView(leftView);
@@ -85,7 +89,6 @@ ipcMain.on('toggle-left-view', () => {
     leftView = new BrowserView();
     mainWindow.addBrowserView(leftView);
     leftView.setBounds({ x: 30, y: 150, width: leftPanelWidth - 60, height: viewHeight });
-    console.log('left', { x: 30, y: 150, width: leftPanelWidth - 60, height: viewHeight })
     leftView.webContents.loadFile('left.html');
     console.log('Left view opened.');
   }
@@ -98,7 +101,7 @@ ipcMain.on('toggle-right-view', () => {
   const leftPanelWidth = panelWidths.left || (windowWidth / 2);
   const rightPanelWidth = windowWidth - leftPanelWidth;
   const viewHeight = windowHeight - 180;
-  const xPosition = leftPanelWidth + 30; //  the x position of the right view 
+  const xPosition = leftPanelWidth + 30;
 
   if (rightView) {
     mainWindow.removeBrowserView(rightView);
@@ -109,7 +112,6 @@ ipcMain.on('toggle-right-view', () => {
     rightView = new BrowserView();
     mainWindow.addBrowserView(rightView);
     rightView.setBounds({ x: xPosition, y: 150, width: rightPanelWidth - 60, height: viewHeight });
-    console.log('right', { x: xPosition, y: 150, width: rightPanelWidth - 60, height: viewHeight })
     rightView.webContents.loadFile('right.html');
     console.log('Right view opened.');
   }
@@ -119,7 +121,7 @@ ipcMain.on('toggle-right-view', () => {
 ipcMain.on('update-view-bounds', (event, widths) => {
     panelWidths = widths;
     const [windowWidth, windowHeight] = mainWindow.getContentSize();
-    const viewHeight = windowHeight - 180; 
+    const viewHeight = windowHeight - 180; // Account for the button area
 
     if (leftView) {
         leftView.setBounds({ x: 30, y: 150, width: panelWidths.left - 60, height: viewHeight });

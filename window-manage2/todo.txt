@@ -1,0 +1,2 @@
+👉 Performance
+If you want smoother performance, you can throttle or requestAnimationFrame your handleMouseMove so it doesn’t fire on every raw mousemove.
