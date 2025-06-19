@@ -69,9 +69,9 @@
     | -------------- | ------------------------------------ |
     | `<div>`        | Container block                      |
     | `<p>`          | Paragraph text                       |
-    | `<span>`       | Inline container                     |
+    | `<span>`       | Inline container                     |Used to style or manipulate small bits of content (like label text or icon wrappers). Doesn’t add layout by default—just semantics and style.
     | `<ul>`         | Unordered list                       |
-    | `<li>`         | List item                            |
+    | `<li>`         | List item                            |Always used within a <ul> (unordered list) or <ol> (ordered list). Helps structure navigation or group items
     | `<h2>`         | Heading (medium size)                |
     | `<input>`      | User input field                     |
     | `<label>`      | Label for form input                 |
@@ -80,7 +80,11 @@
     | `<script>`     | Link to JS file (commented out here) |
     | `<!DOCTYPE>`   | HTML5 declaration                    |
     | `<!-- ... -->` | Comment                              |
-
+    | `<svg>`        | Scalable Vector Graphics             |Used to draw resolution-independent graphics (like icons) directly in HTML. Great for offline apps since you’re no longer depending on libraries like Font Awesome.
+    | `<path>`       | Only used inside SVG                 |
+    | `<a>`          | The classic anchor element           | It creates hyperlinks, but you can also use it for clickable UI items by styling it or intercepting the default behavior with JavaScript (like you do in your panel).
+    | `<aside>`      |Typically used for complementary content| (like a sidebar). In your UI, it’s perfect for that collapsible icon panel.
+    | `<nav>`        | Stands for navigation                |It wraps blocks of primary navigation links (e.g. a side panel’s menu). Helps with accessibility and SEO.
 
 
 | HTML Element | `createElement(...)` must use |
