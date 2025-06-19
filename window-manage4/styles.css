@@ -3,13 +3,23 @@ body {
     font-family: 'Inter', sans-serif; /* Fallback to sans-serif if Inter is not available */
     margin: 0;
     overflow: hidden; /* Prevent horizontal scroll when panel expands */
-    display: flex; /* Use flexbox for body to arrange side panel and main content */
+    /*display: flex; /*Use flexbox for body to arrange side panel and main content */
     height: 100vh; /* Full viewport height */
     background-color: #f3f4f6; /* Light gray background */
 }
 
+.main-content {
+    font-family: 'Inter', sans-serif; /* Fallback to sans-serif if Inter is not available */
+    margin-left: 34px;
+    height: 100vh; /* Full viewport height */
+    background-color: #f3f4f6; /* Light gray background */
+    transition: margin-left 0.3s ease-in-out; /* Smooth transition for width */
+}
 /* Side Panel Styles */
 .side-panel {
+    position: fixed;
+    top: 0; bottom: 0; left: 0;
+    z-index: 10;
     width: 34px; /* Default folded width */
     background-color: #1f2937; /* Dark gray background */
     color: #9ca3af; /* Light gray text */
@@ -26,6 +36,12 @@ body {
 .side-panel.open {
     width: 156px; /* Expanded width on hover */
 }
+
+.main-content.pushed {
+    margin-left: 156px; /* Margin for expanded/pinned panel */
+}
+
+
 .side-panel.open .pin-toggle-item {
     width: 20px; /* Expanded width on hover */
     border-radius: 50%;

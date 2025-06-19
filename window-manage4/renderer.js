@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sidePanel = document.getElementById('sidePanel');
     const panelItems = document.querySelectorAll('.panel-item');
     const pinToggleButton = document.getElementById('pinToggleButton'); // Now targets the <a> tag
+    const mainContent = document.getElementById('mainContent');
 
     let isPinned = false; // New state variable to track if the panel is pinned
 
@@ -43,10 +44,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updatePanelState() {
         if (isPinned) {
-            sidePanel.classList.add('open', 'pinned'); // Add 'pinned' class when pinned
+            sidePanel.classList.add('open', 'pinned'); // Add 'pinned' class when pinned(does the class pinned not used)
+            mainContent.classList.add('pushed');
             pinToggleButton.classList.add('active'); // Activate pin icon visual
         } else {
             sidePanel.classList.remove('open', 'pinned'); // Remove 'pinned' class
+            mainContent.classList.remove('pushed');
             pinToggleButton.classList.remove('active'); // Deactivate pin icon visual
         }
     }
@@ -74,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.getElementById('messageBoxClose').addEventListener('click', () => {
                 messageBox.classList.remove('message-box-active');
+                // is As
                 setTimeout(() => messageBox.remove(), 300); // Remove after transition
             });
         }
