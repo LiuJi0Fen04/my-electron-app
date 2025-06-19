@@ -26,6 +26,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    window.addEventListener('keydown', (event) => {
+        const isKeyPin = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'b';
+        if(isKeyPin){
+            isPinned = !isPinned;
+            updatePanelState();
+
+        }
+    })
+    
     // Add click event listeners to each panel item
     panelItems.forEach(item => {
         item.addEventListener('click', (event) => {

@@ -238,6 +238,7 @@ body {
 
 .pin-toggle-item .pin-icon-wrapper {
     /* display: inline-block; */
+    transform: rotate(90deg);
     width: 20px;
     height: 20px;
     flex-shrink: 0; /* Prevent icon from shrinking */
@@ -249,7 +250,7 @@ body {
 }
 
 .pin-toggle-item.active .pin-svg {
-    transform: rotate(90deg); /* Rotate 45 degrees when active (pinned) */
+    transform: rotate(-90deg); /* Rotate 45 degrees when active (pinned) */
     fill: #ffffff; /* White color when active */
 }
 
