@@ -1,4 +1,12 @@
-$commitNote = Read-Host "Enter commit name"
+$commitNote = $args[0]
+
+if (-not $commitNote){
+    Write-Host "! Usage: ./push.ps1 'your message here'"
+    exit 1
+}
+
+
+# $commitNote = Read-Host "Enter commit name"
 $currentFolder = Split-path -Leaf (Get-Location)
 
 
