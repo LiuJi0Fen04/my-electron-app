@@ -8,9 +8,9 @@ function createWindow () {
     minWidth: 800,
     minHeight: 600,
     webPreferences: {
-    //   preload: path.join(__dirname, 'preload.js'), // If you need a preload script
-      nodeIntegration: true, // Be cautious with this in production
-      contextIsolation: false // Or true with proper context bridge setup
+      preload: path.join(__dirname, 'preload.js'), // If you need a preload script
+      nodeIntegration: false, // Be cautious with this in production
+      contextIsolation: true // Or true with proper context bridge setup
     }
   });
 

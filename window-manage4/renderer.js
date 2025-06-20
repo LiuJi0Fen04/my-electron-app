@@ -1,5 +1,3 @@
-const {ipcRenderer} = require('electron')
-
 document.addEventListener('DOMContentLoaded', () => {
     const sidePanel = document.getElementById('sidePanel');
     const panelItems = document.querySelectorAll('.panel-item');
