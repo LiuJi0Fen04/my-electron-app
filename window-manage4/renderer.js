@@ -39,12 +39,18 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault(); // Prevent default link behavior
             const action = item.getAttribute('data-action');
             if (action) {
-                console.log(`Action clicked: ${action}`);
-                // You can add your Electron IPC (Inter-Process Communication)
-                // calls here to interact with the main process.
-                // For this demo, we'll just log to the console.
+                if (action === 'config'){
+                    console.log('config clicked')
+                    window.electronAPI.send('navigate', 'config.html')
+                }
+                else{
+                    console.log(`Action clicked: ${action}`);
+                    // You can add your Electron IPC (Inter-Process Communication)
+                    // calls here to interact with the main process.
+                    // For this demo, we'll just log to the console.
 
-                showMessageBox(`You clicked: ${action.charAt(0).toUpperCase() + action.slice(1)}`);
+                    showMessageBox(`You clicked: ${action.charAt(0).toUpperCase() + action.slice(1)}`);                    
+                }
             }
         });
     });

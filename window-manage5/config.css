@@ -1,0 +1,47 @@
+.main-config {
+    display: flex;
+    height: 20vh;
+    width: 70vw - 34px;
+    flex-direction: column;
+}
+
+.config-panel {
+    flex: 1; /**/
+    border-radius: 10px;
+    display: flex;
+    width: 70vw - 34px;
+    margin-bottom: 10px;
+    background-color: #d6b78d;
+    flex-direction: column;
+    border: 1px solid #d59b49;
+}
+
+.clickable-area {
+    flex: 1;  /* they each take up equal height, filling the .panel*/
+    display: flex;
+    border-radius: 10px;
+
+    justify-content: left;
+    align-items: center;
+    border-bottom: 1px solid #d59b49;
+    /* border-right: 1px solid #ccc; */
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    /* Padding is the space inside the element, between its content (like text) and its border. */
+    /* Margin is the space outside the element, between the element’s border and neighboring elements. */
+    /* In your case, using padding-left: 30px pushes the text inward, away from the left edge of the .clickable-area—it's still part of that box. */
+    /* If you used margin-left: 30px instead, you'd be moving the whole clickable box 30px to the right, potentially creating unwanted gaps or layout shifts in your flex layout. */
+    padding-left: 34px;
+    /* margin-bottom: 10px; */
+}
+
+.clickable-area:last-child {
+    border-bottom: none;
+    /* border-right: none; */
+}
+
+.clickable-area:hover {
+    border-radius: 10px;
+
+    background-color: #d59b49;
+}

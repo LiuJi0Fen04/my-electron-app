@@ -97,12 +97,15 @@
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
                             >
+                                <!-- Line chart path -->
+                                <polyline points="3,14 8,10"  stroke="#DF1463"></polyline>
+                                <polyline points="8,10 13,12"  stroke="#37ac58"></polyline>
+                                <polyline points="13,12 18,6"  stroke="#DF1463"></polyline>
+                                <polyline points="18,6 21,8"  stroke="#37ac58"></polyline>
                                 <!-- X-axis -->
                                 <line x1="3" y1="20" x2="21" y2="20"></line>
                                 <!-- Y-axis -->
                                 <line x1="3" y1="20" x2="3" y2="4"></line>
-                                <!-- Line chart path -->
-                                <polyline points="3,14 8,10 13,12 18,6 21,8"></polyline>
                             </svg>                          
                         </span>
                         <span class="panel-text">仪表盘</span>
@@ -201,23 +204,7 @@
 
     <!-- Main Content Area -->
     <main id="mainContent" class="main-content">
-        <h1 class="main-title">Welcome to the Main Application</h1>
-        <p class="main-text">
-            This is the main content area of your Electron application. The side panel on the left will expand
-            when you hover over it, revealing the names of the navigation items. You can click on any
-            icon or text to trigger an action (check the browser's console for output).
-            This layout is fully responsive and adapts to different screen sizes.
-        </p>
-        <div class="info-box">
-            <h2 class="info-box-title">使用方法:</h2>
-            <ul class="info-box-list">
-                <li>选择根据图像和模型创建新项目（或者直接创建）</li>
-                <li>使用鼠标对各个类进行命名，右键编辑该类的算法（直接创建可以依据工具组合）</li>
-                <li>选择插入自定义代码段（可选）</li>
-                <li>运行debug</li>
-                <li>安装到软件</li>
-            </ul>
-        </div>
+
     </main>
     <script src="./renderer.js"></script>
 </body>

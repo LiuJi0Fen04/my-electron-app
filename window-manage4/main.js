@@ -1,5 +1,6 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+
 
 function createWindow () {
   const mainWindow = new BrowserWindow({
@@ -15,6 +16,14 @@ function createWindow () {
   });
 
   mainWindow.loadFile('index.html'); // Load the generated HTML
+  ipcMain.on('navigate', (event, page) => {
+    console.log('heard config')
+    if (page === 'config.html'){
+      mainWindow.loadFile(path.join(__dirname, page));
+    }
+  })
+
+  
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools();
@@ -31,3 +40,7 @@ app.whenReady().then(() => {
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit();
 });
+
+
+
+// when click '算法配置编辑' this app will open a config.html page which in the exactly location of index.html. in config.html, there are two area arrange in left and right, which could be click 
