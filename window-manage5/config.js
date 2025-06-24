@@ -41,10 +41,64 @@
         area.addEventListener('click', () => {
             // This logic remains the same.
             if (typeof showMessageBox === 'function') {
-                showMessageBox(`You clicked on ${area.textContent}`);
+                loadMainContent('config_create.html')
+                // showMessageBox(`You clicked on ${area.textContent}`);
             } else {
                 alert(`You clicked on ${area.textContent}`);
             }
         });
     });
 })(); // The final () invokes the function immediately.
+
+
+
+   /**
+     * CORRECTED FUNCTION: Fetches and loads HTML, CSS, and JS into the main area.
+     * @param {string} page The HTML file to load (e.g., 'config.html')
+     */
+   async function loadMainContent(page) {
+    // 1. Clean up content from the previously loaded page
+    cleanupDynamicContent();
+
+    try {
+        const response = await fetch(page);
+        if (!response.ok) {
+            throw new Error(`Failed to load page: ${response.statusText}`);
+        }
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        // 2. Find and add stylesheets from the loaded document's <head>
+        doc.head.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+            const newLink = document.createElement('link');
+            newLink.rel = 'stylesheet';
+            newLink.href = link.getAttribute('href');
+            newLink.classList.add('dynamic-style'); // Add class for cleanup
+            document.head.appendChild(newLink);
+        });
+
+        // 3. Inject the HTML from the <body> of the loaded document
+        mainContent.innerHTML = doc.body.innerHTML;
+
+        // 4. Find, create, and append scripts to make them execute
+        doc.body.querySelectorAll('script').forEach(script => {
+            const newScript = document.createElement('script');
+            newScript.classList.add('dynamic-script'); // Add class for cleanup
+            if (script.src) {
+                // For external scripts, copy the src.
+                // We must use a unique URL component to force re-execution if needed,
+                // but for this case, simple attachment works.
+                newScript.src = script.getAttribute('src');
+            } else {
+                // For inline scripts, copy the content
+                newScript.textContent = script.textContent;
+            }
+            document.body.appendChild(newScript);
+        });
+
+    } catch (error) {
+        console.error('Error loading content:', error);
+        mainContent.innerHTML = `<p style="color: red; text-align: center;">Sorry, could not load content for ${page}.</p>`;
+    }
+}
