@@ -1,0 +1,71 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f7fa;
+  margin: 0;
+  padding: 40px;
+}
+
+.config-container {
+  max-width: 90%;
+  margin: 0 auto;
+  background: #fff;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  /* position: relative; */
+}
+
+.config-container h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 24px;
+  color: #333;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    margin-right: 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 6px;
+  color: #555;
+}
+
+input[type="text"], input[type="number"] {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.button-group {
+  position: absolute;
+  right: 30px;
+  bottom: 30px;
+}
+
+.button-group button {
+  padding: 10px 20px;
+  font-size: 16px;
+  margin-left: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.button-group .back-btn {
+  background: #ccc;
+  color: #333;
+}
+
+.button-group .create-btn {
+  background: #4CAF50;
+  color: #fff;
+}
+
+.button-group button:hover {
+  opacity: 0.9;
+}

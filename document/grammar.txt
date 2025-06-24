@@ -79,3 +79,32 @@
     You tell the camera to watch each door (observer.observe(thumb)).
     Whenever any door opens (becomes visible), the camera notifies you with a list (entries) of which doors just opened.
     Each notification (entry) tells you exactly which door (entry.target) it was.
+
+
+            
+3. Here’s a breakdown of the problem and how the IIFE solves it:
+
+    The Problem: Global Scope Pollution
+        Dynamic Content Loading: Your application doesn't navigate to entirely new pages in the traditional sense. Instead, the renderer.js file dynamically loads the content of HTML files like config.html into the main content area of index.html. When it does this, it also finds any associated <script> tags and adds them to the document to make them run.
+
+        Variable Declaration in Global Scope: As your own code comment in config.js notes, an early version of the script had a critical flaw.
+
+        When you first clicked "算法配置编辑", config.js was loaded. It created a constant variable named clickableAreas in the global scope.
+        If you navigated away and then clicked "算法配置编辑" a second time, the loadMainContent function would attempt to load and run config.js again.
+        The script would then try to declare const clickableAreas in the global scope again.
+        The Error: JavaScript does not allow you to re-declare a variable using const or let within the same scope. This would throw a SyntaxError: Identifier 'clickableAreas' has already been declared, and your script would fail to run on the second click.
+
+    The Solution: The IIFE
+        The (() => { ... })() syntax creates a private, temporary scope for your code.
+
+        Here's how it works:
+
+        () => { ... }: This is an anonymous arrow function. It has no name.
+        (...): The parentheses wrapping the function (() => { ... }) are crucial. They tell JavaScript to treat the function as an expression rather than a standard declaration.
+        (): The final pair of parentheses () at the end immediately executes, or "invokes," the function expression.
+        By wrapping the code this way, you gain the following benefits:
+
+        Creates a Private Scope: Every time config.js is loaded, the IIFE creates a brand new, isolated function scope.
+        Avoids Conflicts: Variables like clickableAreas are now declared inside this private scope, not the global one. When the function finishes, this scope and its variables are discarded.
+        Enables Reusability: When you load the script a second time, a new private scope is created for the new execution. Since the new variables are in a completely separate scope, they don't conflict with any from the previous execution.
+    In short, the IIFE acts as a self-contained wrapper, ensuring that your script runs cleanly every time it's loaded without polluting the global scope or causing re-declaration errors.

@@ -20,12 +20,37 @@ function createWindow () {
   });
 
   mainWindow.loadFile('index.html'); // Load the generated HTML
-  // ipcMain.on('navigate', (event, page) => {
-  //   console.log('heard config')
-  //   if (page === 'config.html'){
-  //     mainWindow.loadFile(path.join(__dirname, page));
-  //   }
-  // })
+
+  // // Create or open the database
+  // db = new sqlite3.Database('recent_projects.db');
+  // db.run(`CREATE TABLE IF NOT EXISTS records (id INTEGER PRIMARY KEY, content TEXT)`);
+
+  // ipcMain.handle('insert-record', async (event, content) => {
+  //   console.log('insert-record handler registered');
+  //   return new Promise((resolve, reject) => {
+  //     db.run(`INSERT INTO records (content) VALUES (?)`, [content], function(err) {
+  //       if (err) {
+  //         console.error("Insert Error:", err);
+  //         reject(err);
+  //       } else {
+  //         resolve();
+  //       }
+  //     });
+  //   });
+  // });
+
+  // ipcMain.handle('get-records', async () => {
+  //   return new Promise((resolve, reject) => {
+  //     db.all(`SELECT content FROM records`, [], (err, rows) => {
+  //       if (err) {
+  //         console.error("Query Error:", err);
+  //         reject(err);
+  //       } else {
+  //         resolve(rows);
+  //       }
+  //     });
+  //   });
+  // });
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools();

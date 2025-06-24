@@ -40,17 +40,30 @@
     clickableAreas.forEach(area => {
         area.addEventListener('click', () => {
             // This logic remains the same.
-            if (typeof showMessageBox === 'function') {
+            // if (typeof showMessageBox === 'function') {
+            if (area.id === 'config_method1') {
                 loadMainContent('config_create.html')
                 // showMessageBox(`You clicked on ${area.textContent}`);
-            } else {
-                alert(`You clicked on ${area.textContent}`);
+            } 
+            else if (area.id === 'config_method2') {
+                loadMainContent('config_create2.html')
+
+                // alert(`Youu clicked on ${area.textContent}`);
             }
         });
     });
 })(); // The final () invokes the function immediately.
 
 
+
+    /**
+     * Cleans up dynamically added styles and scripts.
+     * This prevents styles from one page affecting another.
+     */
+    function cleanupDynamicContent() {
+        document.querySelectorAll('.dynamic-style').forEach(style => style.remove());
+        document.querySelectorAll('.dynamic-script').forEach(script => script.remove());
+    }
 
    /**
      * CORRECTED FUNCTION: Fetches and loads HTML, CSS, and JS into the main area.
