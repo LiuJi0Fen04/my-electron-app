@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, Menu, dialog, MenuItem } = require('electro
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 
-const db = new sqlite3.Database(path.join(__dirname, 'recent_projects.db'));
+let db;
 
 let mainWindow;
 
@@ -21,72 +21,73 @@ function createWindow () {
 
   mainWindow.loadFile('index.html'); // Load the generated HTML
 
-  // // Create or open the database
-  // db = new sqlite3.Database('recent_projects.db');
-  // db.run(`CREATE TABLE IF NOT EXISTS records (id INTEGER PRIMARY KEY, content TEXT)`);
+  // Create or open the database
+  db = new sqlite3.Database('recent_projects.db');
+  db.run(`CREATE TABLE IF NOT EXISTS records (id INTEGER PRIMARY KEY, content TEXT)`);
 
-  // ipcMain.handle('insert-record', async (event, content) => {
-  //   console.log('insert-record handler registered');
-  //   return new Promise((resolve, reject) => {
-  //     db.run(`INSERT INTO records (content) VALUES (?)`, [content], function(err) {
-  //       if (err) {
-  //         console.error("Insert Error:", err);
-  //         reject(err);
-  //       } else {
-  //         resolve();
-  //       }
-  //     });
-  //   });
-  // });
+  ipcMain.handle('insert-record', async (event, content) => {
+    console.log('insert-record handler registered');
+    return new Promise((resolve, reject) => {
+      db.run(`INSERT INTO records (content) VALUES (?)`, [content], function(err) {
+        if (err) {
+          console.error("Insert Error:", err);
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+  });
 
-  // ipcMain.handle('get-records', async () => {
-  //   return new Promise((resolve, reject) => {
-  //     db.all(`SELECT content FROM records`, [], (err, rows) => {
-  //       if (err) {
-  //         console.error("Query Error:", err);
-  //         reject(err);
-  //       } else {
-  //         resolve(rows);
-  //       }
-  //     });
-  //   });
-  // });
+  ipcMain.handle('get-records', async () => {
+    return new Promise((resolve, reject) => {
+      db.all(`SELECT content FROM records`, [], (err, rows) => {
+        if (err) {
+          console.error("Query Error:", err);
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      });
+    });
+  });
+
+  ipcMain.handle('has-record', async (event, content) => {
+    return new Promise((resolve, reject) => {
+      db.get(`SELECT 1 FROM records WHERE content = ?`, [content], (err, row) => {
+        if (err) {
+          console.error('Check error:', err);
+          reject(err);
+        } else {
+          resolve(!!row); // true if found, false if not
+        }
+      });
+    });
+  });
+
+  ipcMain.handle('delete-record', async (event, content) => {
+    return new Promise((resolve, reject) => {
+      db.run(`DELETE FROM records WHERE content = ?`, [content], function(err) {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+  });
+  
+  ipcMain.handle('rename-record', async (event, oldContent, newContent) => {
+    return new Promise((resolve, reject) => {
+      db.run(`UPDATE records SET content = ? WHERE content = ?`, [newContent, oldContent], function(err) {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+  });
+  
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools();
 }
 
-// const menuTemplate = [
-//   {
-//     label: 'File',
-//     submenu: [
-//       {
-//         label: 'Open File',
-//         accelerator: 'CmdOrCtrl+O',
-//         click:async(MenuItem, browserWindow) => {
-//           const {canceled, filePaths} = await dialog.showOpenDialog(browserWindow, {
-//             properties:['openFile']
-//           });
-//           if (!canceled && filePaths.length > 0){
-//             browserWindow.webContents.send('file-opened', filePaths[0]);
-//           }
-//         }
-//       },
-//       {role: 'quit'}
-//     ]
-//   },
-//     {
-//     label: 'Edit',
-//     submenu: [
-//       { role: 'undo' },
-//       { role: 'redo' },
-//       { type: 'separator' },
-//       { role: 'cut' },
-//       { role: 'copy' },
-//       { role: 'paste' }
-//     ]
-//   }
-// ]
 
 
 

@@ -1,6 +1,7 @@
 (() => {
     // Select the form elements from the DOM
     const createBtn = document.getElementById('create-btn');
+    const backBtn = document.getElementById('back-btn');
     const projectNameInput = document.getElementById('projectName');
     const productNameInput = document.getElementById('productName');
     const stationNumberInput = document.getElementById('stationNumber');
@@ -12,13 +13,32 @@
             const currentValue = projectNameInput.value;
             
             // Use a regular expression to remove any characters that are not letters (A-Z, a-z)
-            const sanitizedValue = currentValue.replace(/[^a-zA-Z]/g, '');
+            const sanitizedValue = currentValue.replace(/[^a-zA-Z0-9]/g, '');
             
             // Update the input field's value with the sanitized version
             projectNameInput.value = sanitizedValue;
         });
     }
 
+    // Add input event listener to the Project Name field for real-time validation
+    if (productNameInput) {
+        productNameInput.addEventListener('input', () => {
+            // Get the current value from the input field
+            const currentValue = productNameInput.value;
+            
+            // Use a regular expression to remove any characters that are not letters (A-Z, a-z)
+            const sanitizedValue = currentValue.replace(/[^a-zA-Z0-9]/g, '');
+            
+            // Update the input field's value with the sanitized version
+            productNameInput.value = sanitizedValue;
+        });
+    }
+
+    if (backBtn){
+        backBtn.addEventListener('click', async () => {
+            loadMainContent('config.html');
+        });
+    }
 
     // Check if the create button exists to avoid errors
     if (createBtn) {
@@ -35,12 +55,19 @@
                 return; // Stop the function if validation fails
             }
             
-            // await window.db.insert(projectName);
-            // const records = await window.db.getAll();
-            // console.clear();
-            // records.forEach((row, i) => {
-            //   console.log(`[${i + 1}] ${row.content}`);
-            // });
+            // 🔍 Check if it already exists
+            const exists = await window.db.has(projectName);
+            if (exists) {
+                alert('This projectName has already been recorded.');
+                return;
+            }
+
+            await window.db.insert(projectName);
+            const records = await window.db.getAll();
+            console.clear();
+            records.forEach((row, i) => {
+              console.log(`[${i + 1}] ${row.content}`);
+            });
             // input.value = '';
 
 

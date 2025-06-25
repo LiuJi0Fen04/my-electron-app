@@ -17,9 +17,24 @@
         </div>
     </div>
     <h4>最近打开的项目</h4>
-    <ul class="recent-projects">
-        <li>项目1</li>
+    <ul id="recentList" class="recent-projects">
+        <!-- rencent projects will go there -->
     </ul>
+    <div id="contextMenu" class="custom-context-menu">
+        <ul>
+          <li id="menu-open">Open in Code</li>
+          <li id="menu-rename">Change Name</li>
+          <li id="menu-delete">Delete</li>
+        </ul>
+    </div>
+    <div id="renameModal" class="modal">
+        <div class="modal-content">
+          <label for="renameInput">Enter new content:</label>
+          <input id="renameInput" type="text" />
+          <button id="renameConfirm">OK</button>
+          <button id="renameCancel">Cancel</button>
+        </div>
+    </div>
     <script src="./config.js"></script>
 
 
