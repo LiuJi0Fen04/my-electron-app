@@ -252,6 +252,7 @@ body {
 .pin-toggle-item.active .pin-svg {
     transform: rotate(-90deg); /* Rotate 45 degrees when active (pinned) */
     fill: #ffffff; /* White color when active */
+    fill: #37ac58; /* White color when active */
 }
 
 

@@ -88,7 +88,18 @@ function createWindow () {
   // mainWindow.webContents.openDevTools();
 }
 
+function createNewWindow(filePath) {
+  const newWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
+    webPreferences: {
+      // preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+    }
+  });
 
+  newWindow.loadFile(filePath);
+}
 
 
 
@@ -118,6 +129,9 @@ app.whenReady().then(() => {
   const updatedMenu = Menu.buildFromTemplate(menuItems);
   Menu.setApplicationMenu(updatedMenu);
 
+  ipcMain.on('open-new-window', (event, filePath) => {
+    createNewWindow(filePath);
+  });
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

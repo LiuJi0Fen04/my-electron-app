@@ -50,7 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 else if (action === 'settings'){
                     console.log('config clicked')
-                    loadMainContent('./settings/settings.html');
+                    window.electronAPI.openNewWindow('./settings/settings.html');
+                    // loadMainContent('./settings/settings.html');
                 }
                 else if (action === 'home'){
                     mainContent.innerHTML = `
@@ -194,6 +195,8 @@ document.addEventListener('DOMContentLoaded', () => {
           document.head.appendChild(link);
         }
       }
+
+
     // Load the initial home content when the app starts
     document.querySelector('[data-action="home"]').click();
 });

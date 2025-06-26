@@ -8,7 +8,7 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    /*overflow: hidden; /* Prevent body scroll */
+    overflow: hidden; /* Prevent body scroll */
 }
 
 /* Container for the entire settings page */
@@ -21,19 +21,20 @@ body {
     background-color: #fff;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
     border-radius: 0.75rem; /* rounded-xl */
-    /* overflow: hidden; */
+    overflow: hidden; */
 }
 
 /* Left Sidebar styles */
 .sidebar {
-    width: 100%; /* Full width on small screens */
+    /*width: 50%; /* Full width on small screens */
+    width: 156px; /* Full width on small screens */
     background-color: #2d3848; /* gray-800 */
     color: #fff;
-    padding: 1.5rem; /* p-6 */
+    padding: .5rem; /* p-6 */
     display: flex;
     flex-direction: column;
-    border-top-left-radius: 0.75rem; /* rounded-t-xl */
-    border-top-right-radius: 0.75rem; /* rounded-t-xl */
+    border-top-left-radius: 0.25rem; /* rounded-t-xl */
+    border-top-right-radius: 0.25rem; /* rounded-t-xl */
 }
 
 .sidebar h2 {
