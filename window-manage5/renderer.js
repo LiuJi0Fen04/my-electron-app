@@ -48,6 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     loadMainContent('config.html');
                     // loadStyleOnce('config.css');
                 }
+                else if (action === 'settings'){
+                    console.log('config clicked')
+                    loadMainContent('./settings/settings.html');
+                }
                 else if (action === 'home'){
                     mainContent.innerHTML = `
                         <h1 class="main-title">Welcome to the Main Application</h1>

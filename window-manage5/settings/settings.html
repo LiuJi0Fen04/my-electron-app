@@ -1,0 +1,107 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <!-- Link to the external CSS file -->
+    <link rel="stylesheet" href="./settings/settings.css">
+</head>
+<body>
+    <div class="settings-container">
+
+        <!-- Left Sidebar (Navigation) -->
+        <div class="sidebar">
+            <h2>Settings</h2>
+            <nav>
+                <ul>
+                    <li>
+                        <a href="#" class="nav-item" data-section="passwords">Passwords</a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item" data-section="appearance">Appearance</a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item active" data-section="downloads">Downloads</a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item" data-section="languages">Languages</a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item" data-section="about">About This Software</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- Right Content Area -->
+        <div class="content-area">
+            <!-- Downloads Section -->
+            <section id="downloads" class="settings-section">
+                <h3>Downloads</h3>
+                <div class="settings-card">
+                    <label for="downloadPath">Download Location:</label>
+                    <div class="action-group">
+                        <input type="text" id="downloadPath" value="C:\Users\YourUser\Downloads" readonly>
+                        <button id="changeDownloadPathBtn">Change</button>
+                    </div>
+                    <p>Files downloaded from the internet will be saved here.</p>
+                </div>
+            </section>
+
+            <!-- Languages Section -->
+            <section id="languages" class="settings-section hidden">
+                <h3>Languages</h3>
+                <div class="settings-card">
+                    <label for="languageSelect">Application Language:</label>
+                    <select id="languageSelect">
+                        <option value="en">English</option>
+                        <option value="zh">简体中文 (Simplified Chinese)</option>
+                    </select>
+                    <p>Changes will take effect after restarting the application.</p>
+                </div>
+            </section>
+
+            <!-- Passwords Section -->
+            <section id="passwords" class="settings-section hidden">
+                <h3>Passwords</h3>
+                <div class="settings-card">
+                    <p>Manage your saved passwords. (Functionality for a real Electron app would involve secure storage and IPC with main process.)</p>
+                    <button class="secondary-button">View Saved Passwords</button>
+                </div>
+            </section>
+
+            <!-- Appearance Section -->
+            <section id="appearance" class="settings-section hidden">
+                <h3>Appearance</h3>
+                <div class="settings-card">
+                    <p>Customize the look and feel of the application.</p>
+                    <div>
+                        <label for="themeToggle">Dark Mode:</label>
+                        <input type="checkbox" id="themeToggle" class="form-checkbox">
+                    </div>
+                    <div>
+                        <label for="fontSize">Font Size:</label>
+                        <input type="range" id="fontSize" min="12" max="20" value="16">
+                        <p>Current: <span id="currentFontSize">16</span>px</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- About This Software Section -->
+            <section id="about" class="settings-section hidden">
+                <h3>About This Software</h3>
+                <div class="settings-card">
+                    <p><strong>Application Name:</strong> My Electron App</p>
+                    <p><strong>Version:</strong> 1.0.0</p>
+                    <p><strong>Developer:</strong> Gemini Assistant</p>
+                    <p>This software is built using Electron and web technologies to provide a seamless desktop experience.</p>
+                </div>
+            </section>
+
+        </div>
+    </div>
+    <script src="./settings/settings.js"></script>
+</body>
+</html>
