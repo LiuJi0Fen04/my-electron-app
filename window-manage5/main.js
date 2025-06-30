@@ -6,6 +6,7 @@ let db;
 
 let mainWindow;
 
+
 function createWindow () {
   mainWindow = new BrowserWindow({
     width: 1000,
@@ -88,19 +89,41 @@ function createWindow () {
   // mainWindow.webContents.openDevTools();
 }
 
-function createNewWindow(filePath) {
+function createNewWindow(filePath, frame = true) {
   const newWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 650,
+    height: 400,
+    minWidth: 650,
+    minHeight: 400,
+    maxWidth: 1200,
+    maxHeight: 900,
+    parent: mainWindow,
+    maximizable: false,
+    minimizable: false,
+    modal: true,
+    // frame: frame,
+    // remove the default titlebar
+    titleBarStyle: 'hidden',
+    // expose window controls in windows/linux
+    ...(process.platform !== 'darwin' ? {titleBarOverlay: {color: '#f9fafb',    symbolColor: '#74b1be', height: 30}} :{}),
     webPreferences: {
-      // preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
     }
   });
 
   newWindow.loadFile(filePath);
+
+  // newWindow.webContents.openDevTools();
 }
 
+// function openSettingsWindow(parentWindow){
+//   // preventing opening it twice
+//   if(settingsWindow && !settingsWindow.isDestroyed()){
+//     settingsWindow.focus();  // Just bring it to front
+//     return;
+//   }
+// }
 
 
 app.whenReady().then(() => {
@@ -129,8 +152,8 @@ app.whenReady().then(() => {
   const updatedMenu = Menu.buildFromTemplate(menuItems);
   Menu.setApplicationMenu(updatedMenu);
 
-  ipcMain.on('open-new-window', (event, filePath) => {
-    createNewWindow(filePath);
+  ipcMain.on('open-new-window', (event, filePath, frame) => {
+    createNewWindow(filePath, frame);
   });
 
   app.on('activate', function () {

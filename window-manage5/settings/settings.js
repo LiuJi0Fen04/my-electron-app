@@ -42,6 +42,8 @@
         item.addEventListener('click', (e) => {
             e.preventDefault(); // Prevent default link behavior (page reload)
             const section = e.target.dataset.section; // Get the data-section attribute value
+            console.log('setting find target.dataset.section: ', section);
+
             showSection(section); // Call the function to show the corresponding section
         });
     });

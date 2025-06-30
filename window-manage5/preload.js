@@ -3,7 +3,7 @@ const {contextBridge, ipcRenderer} = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
     send: (channel, data) => ipcRenderer.send(channel, data),
     on: (channel, func) => ipcRenderer.on(channel, (event, ...args) => func(...args)),
-    openNewWindow: (filePath) => ipcRenderer.send('open-new-window', filePath)
+    openNewWindow: (filePath, frame) => ipcRenderer.send('open-new-window', filePath, frame)
 });
 
 contextBridge.exposeInMainWorld('db', {

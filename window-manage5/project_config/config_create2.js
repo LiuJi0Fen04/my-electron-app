@@ -36,7 +36,7 @@
 
     if (backBtn){
         backBtn.addEventListener('click', async () => {
-            loadMainContent('config.html');
+            loadMainContent('./project_config/config.html');
         });
     }
 

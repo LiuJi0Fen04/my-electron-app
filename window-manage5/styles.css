@@ -72,6 +72,12 @@ body {
     color: #ffffff; /* White text on hover */
 }
 
+.panel-item:active {
+    background-color: #4f46e5; /* Indigo-600 */
+    color: #ffffff; /* White text on hover */
+}
+
+
 .panel-item:hover .panel-icon .icon-svg {
     fill: #ffffff; /* Change SVG fill color to white on hover */
 }

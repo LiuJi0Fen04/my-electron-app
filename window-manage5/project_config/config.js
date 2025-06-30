@@ -15,10 +15,10 @@
             // This logic remains the same.
             // if (typeof showMessageBox === 'function') {
             if (area.id === 'config_method1') {
-                loadMainContent('config_create.html')
+                loadMainContent('./project_config/config_create.html')
             } 
             else if (area.id === 'config_method2') {
-                loadMainContent('config_create2.html')
+                loadMainContent('./project_config/config_create2.html')
             }
         });
     });

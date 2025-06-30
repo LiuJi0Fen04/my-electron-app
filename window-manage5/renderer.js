@@ -38,19 +38,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add click event listeners to each panel item
     panelItems.forEach(item => {
         item.addEventListener('click', (event) => {
+            // item.classList.add('active');
             event.preventDefault(); // Prevent default link behavior
             const action = item.getAttribute('data-action');
+            // // Show the target action
+            // const targetAction = document.getElementById('config');
+            // if (targetAction){
+            //     targetAction.classList.add('active'); // Add 'active' class (useful for styling or other JS logic)
+            // }
+            // else{
+            //     console.log('don\' find ', action);
+            // }
             if (action) {
                 if (action === 'config'){
                     // isConfigOn = true;
                     console.log('config clicked')
                     // window.electronAPI.send('navigate', 'config.html')
-                    loadMainContent('config.html');
+                    loadMainContent('./project_config/config.html');
                     // loadStyleOnce('config.css');
                 }
                 else if (action === 'settings'){
                     console.log('config clicked')
-                    window.electronAPI.openNewWindow('./settings/settings.html');
+                    window.electronAPI.openNewWindow('./settings/settings.html', false);
                     // loadMainContent('./settings/settings.html');
                 }
                 else if (action === 'home'){
