@@ -26,7 +26,8 @@ function createWindow () {
   db = new sqlite3.Database('recent_projects.db');
   db.run(`CREATE TABLE IF NOT EXISTS records (
       id INTEGER PRIMARY KEY AUTOINCREMENT, 
-      content TEXT NOT NULL UNIQUE
+      content TEXT NOT NULL UNIQUE,
+      path TEXT
       )
       `,(err) => {
       if (err) console.error('Error creating projects table:', err.message);
