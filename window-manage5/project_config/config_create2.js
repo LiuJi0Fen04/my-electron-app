@@ -5,6 +5,8 @@
     const projectNameInput = document.getElementById('projectName');
     const productNameInput = document.getElementById('productName');
     const stationNumberInput = document.getElementById('stationNumber');
+    const browseBtn = document.getElementById('browseBtn');
+    const folderPathInput = document.getElementById('folderPath');
 
     // Add input event listener to the Project Name field for real-time validation
     if (projectNameInput) {
@@ -49,39 +51,64 @@
             const productName = productNameInput.value.trim();
             const stationNumber = stationNumberInput.value;
 
-            // Check if all fields are filled
-            if (!projectName || !productName || !stationNumber) {
-                alert('Please fill out all fields before creating the project.');
+            // // Check if all fields are filled
+            // if (!projectName || !productName || !stationNumber) {
+            //     alert('Please fill out all fields before creating the project.');
+            //     return; // Stop the function if validation fails
+            // }
+            if (!projectName) {
+                alert('Please fill Project Name');
                 return; // Stop the function if validation fails
             }
             
             // 🔍 Check if it already exists
-            const exists = await window.db.has(projectName);
-            if (exists) {
+            // const exists = await window.db.has(projectName);
+            // if (exists) {
+            let proj_id = await window.db.getProjectId(projectName);
+            if (proj_id !== null) {
                 alert('This projectName has already been recorded.');
-                return;
+                console.log("Project ID:", proj_id);
+                // return;
+                // function to return the existing project id 
+            }else{
+                await window.db.insert(projectName);
+                proj_id = await window.db.getProjectId(projectName);
+                console.log("new Project ID:", proj_id);
+                if (productName){
+                    await window.db.addSubProject({
+                        projectId: parseInt(proj_id),
+                        productName: productName,
+                        stationNumber: parseInt(stationNumber)
+                    });
+
+                }
+                const records = await window.db.getAll();
+                records.forEach((row, i) => {
+                    console.log(`[${i + 1}] ${row.content}`);
+                });
+
+
+                // Format the message with the collected project details
+                const message = `Project successfully created with the following details:\n
+                                - Project Name: ${projectName}
+                                - Product Name: ${productName}
+                                - Station Number: ${stationNumber}`;
+
+                // Display the success message
+                alert(message);                
             }
-
-            await window.db.insert(projectName);
-            const records = await window.db.getAll();
-            console.clear();
-            records.forEach((row, i) => {
-              console.log(`[${i + 1}] ${row.content}`);
-            });
-            // input.value = '';
-
-
-            // Format the message with the collected project details
-            const message = `Project successfully created with the following details:\n
-                            - Project Name: ${projectName}
-                            - Product Name: ${productName}
-                            - Station Number: ${stationNumber}`;
-
-            // Display the success message
-            alert(message);
         });
     }
 
+    if(browseBtn){
+        browseBtn.addEventListener('click', async () => {
+            const folderPath = await window.electronAPI.selectFolder();
+            if(folderPath){
+                folderPathInput.value = folderPath;
+            }
+        })
+
+    }
     // Add input event listener for station number validation
     if (stationNumberInput) {
         stationNumberInput.addEventListener('input', () => {

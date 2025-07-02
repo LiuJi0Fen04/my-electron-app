@@ -1,0 +1,104 @@
+1. FOREIGN key
+    在数据库中，外键（Foreign Key）是用来建立和加强两个数据表之间连接的一种约束。它确保一个表中的值必须对应另一个表中的有效数据，从而保持数据的一致性和完整性。
+
+    🧩 外键的基本作用
+    外键的主要功能是用来 关联两个表，即让一个表的某一列引用另一个表的主键。
+
+    比如，有两个表：
+
+    学生（Students）表：id 是主键。
+
+    成绩（Scores）表：里面有个 student_id 字段，作为外键，关联到 Students.id。
+
+    这样，Scores.student_id 必须是 Students.id 中的某个值。如果某个学生被删除了，那么外键约束就会控制你是否也能删除其成绩信息（这由删除策略决定）。
+
+    🔧 常见的外键级联操作
+    在定义外键时，可以指定当主表数据被修改或删除时从表的行为：
+
+    cascade 表示级联操作，就是说，如果主键表中被参考字段更新，外键表中也更新，主键表中的记录被删除，外键表中改行也相应删除
+    操作类型	含义
+    ON UPDATE CASCADE	当主表的主键更新时，从表中相应的外键值也随之更新。
+    ON DELETE CASCADE	当主表中的记录被删除时，从表中关联的记录也一并被删除。
+    SET NULL	主表记录删除或更新时，从表相应字段被设置为 NULL。
+    NO ACTION / RESTRICT	拒绝对主表的操作，保持数据完整性，不允许孤立数据产生。
+    🎯 举个例子（MySQL）
+    sql
+    CREATE TABLE Students (
+        id INT PRIMARY KEY,
+        name VARCHAR(100)
+    );
+
+    CREATE TABLE Scores (
+        score_id INT PRIMARY KEY,
+        student_id INT,
+        score INT,
+        FOREIGN KEY (student_id)
+            REFERENCES Students(id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+    );
+    在上面的例子中，如果你更新或删除 Students 表中的某个学生，其对应的成绩记录也会随之更新或删除。
+
+    主表 vs 关联表的区分方法
+    维度	主表（Parent Table）	关联表（Child Table）
+    🔑 键关系	提供主键被引用	包含外键引用主表
+    📊 数据独立性	记录独立存在	依赖主表数据
+    🔄 操作关系	操作不会受关联表影响	受主表数据变化影响
+    📌 示例	学生表（Students）	成绩表（Scores）
+    💡 举个例子：学生与成绩
+    sql
+    CREATE TABLE Students (
+        id INT PRIMARY KEY,
+        name VARCHAR(100)
+    );
+
+    CREATE TABLE Scores (
+        id INT PRIMARY KEY,
+        student_id INT,
+        score INT,
+        FOREIGN KEY (student_id) REFERENCES Students(id)
+    );
+    在这个例子里：
+
+    Students 是主表：它的 id 字段被 Scores.student_id 引用了；
+
+    Scores 是关联表：它必须依赖于 Students 表中已有的学生才能插入数据。
+
+2. Uncaught (in promise) Error: Error invoking remote method 'add-sub-project': Error: SQLITE_ERROR: table sub_projects has no column named product_name
+
+    the error is very clear:
+
+    Error: SQLITE_ERROR: table sub_projects has no column named product_name
+    ❗ Cause:
+    Your sub_projects table was already created earlier, and it does not contain a product_name column — even though your CREATE TABLE statement now includes it.
+
+    Why?
+    SQLite will not update the table structure when you run CREATE TABLE IF NOT EXISTS. If the table already exists, it ignores the new schema.
+    So even if you added product_name later in your code, SQLite is still using the old version of the table — without that column.
+
+3. column in database
+
+    Think of a Table as a Spreadsheet:
+    +----+------------+------------------+
+    | id | name       | station_number   |   ← Columns
+    +----+------------+------------------+
+    | 1  | Product A  | 101              |   ← Row (record)
+    | 2  | Product B  | 102              |
+    +----+------------+------------------+
+    Columns define what kind of data each row stores.
+
+    Rows are the actual data entries.
+
+    💡 Column = Field
+    In programming terms, you can think of a column like an object’s property:
+
+    js
+    Copy
+    Edit
+    const row = {
+    id: 1,
+    project_id: 5,
+    product_name: "Product A",
+    station_number: 101
+    };
+    Each key (id, product_name, etc.) represents a column.

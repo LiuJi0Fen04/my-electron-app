@@ -3,7 +3,7 @@ const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 
 let db;
-
+let project_db;
 let mainWindow;
 
 
@@ -24,9 +24,29 @@ function createWindow () {
 
   // Create or open the database
   db = new sqlite3.Database('recent_projects.db');
-  db.run(`CREATE TABLE IF NOT EXISTS records (id INTEGER PRIMARY KEY, content TEXT)`);
+  db.run(`CREATE TABLE IF NOT EXISTS records (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, 
+      content TEXT NOT NULL UNIQUE
+      )
+      `,(err) => {
+      if (err) console.error('Error creating projects table:', err.message);
+  });
 
-  ipcMain.handle('insert-record', async (event, content) => {
+  // name 料号
+  db.run(`
+    CREATE TABLE IF NOT EXISTS sub_projects (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_id INTEGER NOT NULL,
+        product_name TEXT NOT NULL, 
+        station_number INTEGER NOT NULL,
+        FOREIGN KEY (project_id) REFERENCES records(id) ON DELETE CASCADE
+    )
+  `, (err) => {
+      if (err) console.error('Error creating sub_projects table:', err.message);
+  });
+
+
+  ipcMain.handle('insert-project', async (event, content) => {
     console.log('insert-record handler registered');
     return new Promise((resolve, reject) => {
       db.run(`INSERT INTO records (content) VALUES (?)`, [content], function(err) {
@@ -52,6 +72,38 @@ function createWindow () {
       });
     });
   });
+
+
+  ipcMain.handle('get-project-id', async (event, projectName) => {
+    return new Promise((resolve, reject) => {
+      db.get(`SELECT id FROM records WHERE content = ?`, [projectName], (err, row) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row ? row.id : null);
+        }
+      });
+    });
+  });
+
+  ipcMain.handle('add-sub-project', async (event, subProject) => {
+    const { projectId, productName, stationNumber } = subProject;
+    return new Promise((resolve, reject) => {
+        db.run('INSERT INTO sub_projects (project_id, product_name, station_number) VALUES (?, ?, ?)',
+            [projectId, productName, stationNumber],
+            function (err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    console.log('sub success');
+                    resolve({ id: this.lastID, ...subProject });
+                }
+            }
+        );
+    });
+});
+
+
 
   ipcMain.handle('has-record', async (event, content) => {
     return new Promise((resolve, reject) => {
@@ -114,7 +166,7 @@ function createNewWindow(filePath, frame = true) {
 
   newWindow.loadFile(filePath);
 
-  // newWindow.webContents.openDevTools();
+  newWindow.webContents.openDevTools();
 }
 
 // function openSettingsWindow(parentWindow){
@@ -156,6 +208,19 @@ app.whenReady().then(() => {
     createNewWindow(filePath, frame);
   });
 
+  ipcMain.handle('select-folder', async () => {
+    const result = await dialog.showOpenDialog({
+      properties: ['openDirectory']
+    });
+
+    if(result.canceled || result.filePaths.length === 0){
+      return null;
+    }
+
+    return result.filePaths[0];
+  });
+
+
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -164,7 +229,6 @@ app.whenReady().then(() => {
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit();
 });
-
 
 
 // when click '算法配置编辑' this app will open a config.html page which in the exactly location of index.html. in config.html, there are two area arrange in left and right, which could be click 

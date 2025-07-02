@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Project Management</title>
+    <style>
+        body { font-family: sans-serif; }
+        #projectList, #subProjectList { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
+        .project-item, .sub-project-item { margin-bottom: 5px; }
+        .project-item button, .sub-project-item button { margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Project Management</h1>
+
+    <h2>Add New Project</h2>
+    <input type="text" id="newProjectName" placeholder="Project Name">
+    <button id="addProjectBtn">Add Project</button>
+
+    <h2>Projects</h2>
+    <div id="projectList"></div>
+
+    <h2>Sub-Projects for Selected Project</h2>
+    <div id="subProjectForm" style="display: none;">
+        <h3>Add New Sub-Project</h3>
+        <input type="hidden" id="selectedProjectId">
+        <input type="text" id="newSubProjectName" placeholder="Sub-Project Name">
+        <input type="text" id="newSubProjectDescription" placeholder="Description (Optional)">
+        <select id="newSubProjectStatus">
+            <option value="To Do">To Do</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+        </select>
+        <button id="addSubProjectBtn">Add Sub-Project</button>
+    </div>
+    <div id="subProjectList">
+        <p>Select a project to view its sub-projects.</p>
+    </div>
+    <script src="./renderer.js"></script>
+
+</body>
+</html>

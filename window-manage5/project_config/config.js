@@ -23,6 +23,7 @@
         });
     });
 
+    // recent list
     const records = await window.db.getAll();
     updateRecentList(records);
     // Hide the menu on click elsewhere
