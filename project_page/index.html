@@ -9,9 +9,27 @@
 <body>
     <div class="container">
         <div class="left-panel">
-            <h2>Left Panel</h2>
-            <button id="settings-btn">Settings</button>
-            <p>This is the left sidebar.</p>
+            <h2>Tools</h2>
+            <div class="tool-area" id="add-rectangle-tool">
+                <h3>Add Rectangle</h3>
+                <p>Click and drag on the image to draw a rectangle.</p>
+            </div>
+            <div class="tool-area" id="add-circle-tool">
+                <h3>Add Circle</h3>
+                <p>Click and drag on the image to draw a circle (from center).</p>
+            </div>
+            <div class="tool-area" id="pan-tool">
+                <h3>Pan Image</h3>
+                <p>Default mode. Drag to move image.</p>
+            </div>
+            <div class="tool-area active" id="default-tool">
+                <h3>Select/Zoom/Pan</h3>
+                <p>Default mode for image interaction.</p>
+            </div>
+            <button id="clear-shapes-btn">Clear All Shapes</button>
+
+            <button id="send-message-btn">Send Message to Main</button>
+            <p id="main-message-display"></p>
         </div>
 
         <div class="horizontal-resizer" id="left-middle-resizer"></div>
@@ -19,8 +37,6 @@
         <div class="middle-panel">
             <h2>Middle Panel</h2>
             <p>This panel will span the full height.</p>
-            <button id="send-message-btn">Send Message to Main</button>
-            <p id="main-message-display"></p>
         </div>
 
         <div class="horizontal-resizer" id="middle-right-resizer"></div>

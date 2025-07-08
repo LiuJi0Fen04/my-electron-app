@@ -1,4 +1,4 @@
-html, body {
+\html, body {
     height: 100%;
     margin: 0;
     overflow: hidden;
@@ -27,16 +27,52 @@ html, body {
 .left-panel h2 {
     color: #61afef;
     margin-top: 0;
+    margin-bottom: 15px;
 }
 
-.left-panel p {
-    flex-grow: 1;
+/* Styling for the new clickable tool areas */
+.tool-area {
+    background-color: #4b5263;
+    border: 1px solid #5c6370;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-#settings-btn {
-    margin-top: auto;
+.tool-area:hover {
+    background-color: #5c6370;
+}
+
+.tool-area.active {
+    background-color: #61afef; /* Highlight active tool */
+    border-color: #61afef;
+    color: #282c34;
+}
+
+.tool-area.active h3, .tool-area.active p {
+    color: #282c34; /* Darker text for contrast */
+}
+
+
+.tool-area h3 {
+    color: #c678dd;
+    margin-top: 0;
+    margin-bottom: 5px;
+    font-size: 1.1em;
+}
+
+.tool-area p {
+    font-size: 0.85em;
+    color: #a0a8b4;
+    margin: 0;
+}
+
+#clear-shapes-btn {
+    margin-top: 15px;
     padding: 8px 12px;
-    background-color: #56b6c2;
+    background-color: #e06c75; /* Reddish for clear action */
     color: white;
     border: none;
     border-radius: 4px;
@@ -44,9 +80,32 @@ html, body {
     align-self: flex-start;
 }
 
-#settings-btn:hover {
-    background-color: #4cb2bd;
+#clear-shapes-btn:hover {
+    background-color: #d15a6b;
 }
+
+/* Original message button (kept for context, can be removed) */
+#send-message-btn {
+    margin-top: auto; /* Push to bottom if no other content */
+    padding: 8px 12px;
+    background-color: #98c379;
+    color: black;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    align-self: flex-start;
+}
+
+#send-message-btn:hover {
+    background-color: #8ac06b;
+}
+
+#main-message-display {
+    margin-top: 10px;
+    font-style: italic;
+    color: #a0a8b4;
+}
+
 
 .horizontal-resizer {
     width: 8px;
@@ -70,27 +129,6 @@ html, body {
     margin-top: 0;
 }
 
-#send-message-btn {
-    padding: 8px 12px;
-    background-color: #98c379;
-    color: black;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-top: 10px;
-    align-self: flex-start;
-}
-
-#send-message-btn:hover {
-    background-color: #8ac06b;
-}
-
-#main-message-display {
-    margin-top: 10px;
-    font-style: italic;
-    color: #a0a8b4;
-}
-
 .right-panels-container {
     display: flex;
     flex-direction: column;
@@ -99,11 +137,11 @@ html, body {
 }
 
 .right-top-panel {
-    flex-grow: 1; /* Allow canvas panel to take available height */
+    flex-grow: 1;
     background-color: #21252b;
     padding: 15px;
     box-sizing: border-box;
-    display: flex; /* For header and canvas container */
+    display: flex;
     flex-direction: column;
 }
 
@@ -133,20 +171,22 @@ html, body {
 }
 
 .canvas-container {
-    flex-grow: 1; /* Allows canvas to fill remaining space */
-    display: flex; /* To center canvas if needed */
+    flex-grow: 1;
+    display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #31363f; /* Darker background for canvas area */
-    overflow: hidden; /* Hide overflow if image is larger than canvas container */
+    background-color: #31363f;
+    overflow: hidden;
     border-radius: 4px;
     border: 1px solid #5c6370;
+    position: relative; /* Needed for absolute positioning of drawing cursor helper */
 }
 
 #imageCanvas {
     max-width: 100%;
     max-height: 100%;
-    display: block; /* Remove extra space below canvas */
+    display: block;
+    /* Cursor will be set by JS based on drawing mode */
 }
 
 .vertical-resizer {
@@ -157,9 +197,9 @@ html, body {
 }
 
 .right-bottom-panel {
-    height: 150px; /* Initial fixed height for thumbnail gallery */
-    min-height: 100px; /* Minimum height for thumbnail gallery */
-    max-height: 50%; /* Max height for thumbnail gallery relative to its parent */
+    height: 150px;
+    min-height: 100px;
+    max-height: 50%;
     background-color: #21252b;
     padding: 15px;
     box-sizing: border-box;
@@ -176,23 +216,23 @@ html, body {
 .thumbnail-gallery {
     flex-grow: 1;
     display: flex;
-    flex-wrap: wrap; /* Allow thumbnails to wrap to next line */
-    gap: 10px; /* Space between thumbnails */
-    overflow-y: auto; /* Scroll if too many thumbnails */
-    padding-bottom: 5px; /* Little extra padding at bottom for scrollbar */
+    flex-wrap: wrap;
+    gap: 10px;
+    overflow-y: auto;
+    padding-bottom: 5px;
     border: 1px solid #3e4451;
     background-color: #31363f;
     border-radius: 4px;
 }
 
 .thumbnail-item {
-    width: 80px; /* Fixed width for thumbnails */
-    height: 80px; /* Fixed height for thumbnails */
+    width: 80px;
+    height: 80px;
     border: 2px solid transparent;
     cursor: pointer;
     transition: border-color 0.2s ease;
-    overflow: hidden; /* Hide overflow for image scaling */
-    flex-shrink: 0; /* Prevent shrinking when space is tight */
+    overflow: hidden;
+    flex-shrink: 0;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -201,11 +241,11 @@ html, body {
 .thumbnail-item img {
     max-width: 100%;
     max-height: 100%;
-    object-fit: contain; /* Scale image down to fit, maintaining aspect ratio */
+    object-fit: contain;
 }
 
 .thumbnail-item.active {
-    border-color: #61afef; /* Highlight active thumbnail */
+    border-color: #61afef;
 }
 
 .thumbnail-item:hover {
