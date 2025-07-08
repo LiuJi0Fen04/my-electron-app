@@ -1,4 +1,5 @@
-(() => {
+(async () => {
+    let folderPath=null;
     // Select the form elements from the DOM
     const createBtn = document.getElementById('create-btn');
     const backBtn = document.getElementById('back-btn');
@@ -7,6 +8,7 @@
     const stationNumberInput = document.getElementById('stationNumber');
     const browseBtn = document.getElementById('browseBtn');
     const folderPathInput = document.getElementById('folderPath');
+    folderPathInput.value = await window.db.getLastPath();
 
     // Add input event listener to the Project Name field for real-time validation
     if (projectNameInput) {
@@ -56,8 +58,8 @@
             //     alert('Please fill out all fields before creating the project.');
             //     return; // Stop the function if validation fails
             // }
-            if (!projectName) {
-                alert('Please fill Project Name');
+            if (!projectName || !folderPathInput.value) {
+                alert('Please fill Project Name and path');
                 return; // Stop the function if validation fails
             }
             
@@ -68,10 +70,19 @@
             if (proj_id !== null) {
                 alert('This projectName has already been recorded.');
                 console.log("Project ID:", proj_id);
+                // insert subproject into the project
+                if (productName){
+                    await window.db.addSubProject({
+                        projectId: parseInt(proj_id),
+                        productName: productName,
+                        stationNumber: parseInt(stationNumber)
+                    });
+                    // if don't find the sub project, then return 
+                }
                 // return;
                 // function to return the existing project id 
             }else{
-                await window.db.insert(projectName);
+                await window.db.insert(projectName, folderPath);
                 proj_id = await window.db.getProjectId(projectName);
                 console.log("new Project ID:", proj_id);
                 if (productName){
@@ -80,11 +91,10 @@
                         productName: productName,
                         stationNumber: parseInt(stationNumber)
                     });
-
                 }
                 const records = await window.db.getAll();
                 records.forEach((row, i) => {
-                    console.log(`[${i + 1}] ${row.content}`);
+                    console.log(`[${i + 1}] ${row.content} ${row.path}`);
                 });
 
 
@@ -92,17 +102,22 @@
                 const message = `Project successfully created with the following details:\n
                                 - Project Name: ${projectName}
                                 - Product Name: ${productName}
-                                - Station Number: ${stationNumber}`;
-
+                                - Station Number: ${stationNumber}
+                                - Project Path: ${folderPath}`;
+                
                 // Display the success message
-                alert(message);                
+                alert(message);               
+                
+                // open the project page
+                loadMainContent('./project_config/project.html');
             }
+            // 
         });
     }
 
     if(browseBtn){
         browseBtn.addEventListener('click', async () => {
-            const folderPath = await window.electronAPI.selectFolder();
+            folderPath = await window.electronAPI.selectFolder();
             if(folderPath){
                 folderPathInput.value = folderPath;
             }

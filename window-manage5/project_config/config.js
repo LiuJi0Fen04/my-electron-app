@@ -18,6 +18,7 @@
                 loadMainContent('./project_config/config_create.html')
             } 
             else if (area.id === 'config_method2') {
+                
                 loadMainContent('./project_config/config_create2.html')
             }
         });

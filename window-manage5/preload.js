@@ -9,9 +9,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
 contextBridge.exposeInMainWorld('db', {
     // for project
-    insert: (content) => ipcRenderer.invoke('insert-project', content), // add project
+    insert: (content,folderPath) => ipcRenderer.invoke('insert-project', {content, folderPath}), // add project
     getAll: () => ipcRenderer.invoke('get-records'),
     has: (content) => ipcRenderer.invoke('has-record', content),
+    getLastPath: () => ipcRenderer.invoke('get-last-path'),
     delete: (content) => ipcRenderer.invoke('delete-record', content),
     rename: (oldContent, newContent) => ipcRenderer.invoke('rename-record', oldContent, newContent),
     getProjectId: (projectName) => ipcRenderer.invoke('get-project-id', projectName),

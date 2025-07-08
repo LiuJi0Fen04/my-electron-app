@@ -47,10 +47,10 @@ function createWindow () {
   });
 
 
-  ipcMain.handle('insert-project', async (event, content) => {
+  ipcMain.handle('insert-project', async (event, {content,folderPath}) => {
     console.log('insert-record handler registered');
     return new Promise((resolve, reject) => {
-      db.run(`INSERT INTO records (content) VALUES (?)`, [content], function(err) {
+      db.run(`INSERT INTO records (content, path) VALUES (?, ?)`, [content, folderPath], function(err) {
         if (err) {
           console.error("Insert Error:", err);
           reject(err);
@@ -63,7 +63,7 @@ function createWindow () {
 
   ipcMain.handle('get-records', async () => {
     return new Promise((resolve, reject) => {
-      db.all(`SELECT content FROM records`, [], (err, rows) => {
+      db.all(`SELECT content,path FROM records`, [], (err, rows) => {
         if (err) {
           console.error("Query Error:", err);
           reject(err);
@@ -73,7 +73,23 @@ function createWindow () {
       });
     });
   });
-
+  
+  ipcMain.handle('get-last-path', async () => {
+    return new Promise((resolve, reject) => {
+      db.get(
+        `SELECT path FROM records WHERE path IS NOT NULL ORDER BY id DESC LIMIT 1`,
+        [],
+        (err, row) => {
+          if (err) {
+            console.error("Get Last Path Error:", err);
+            reject(err);
+          } else {
+            resolve(row?.path || ''); // return empty string if no path found
+          }
+        }
+      );
+    });
+  });
 
   ipcMain.handle('get-project-id', async (event, projectName) => {
     return new Promise((resolve, reject) => {
