@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let isResizing = false;
     let activeResizer = null;
-
+    // resizer is the three resizer
     function startResizing(e, resizer) {
         isResizing = true;
         activeResizer = resizer;
@@ -39,12 +39,21 @@ document.addEventListener('DOMContentLoaded', () => {
             let newLeftWidth = e.clientX - containerRect.left;
             newLeftWidth = Math.max(minPanelWidth, newLeftWidth);
             const remainingWidth = containerRect.width - newLeftWidth - leftMiddleResizer.offsetWidth - middleRightResizer.offsetWidth;
+
             const currentMiddleWidth = middlePanel.getBoundingClientRect().width;
             const currentRightWidth = rightPanelsContainer.getBoundingClientRect().width;
-
+            console.log('containerRect.width', containerRect.width);
+            console.log('newLeftWidth', newLeftWidth);
+            console.log('leftMiddleResizer.offsetWidth', leftMiddleResizer.offsetWidth);
+            console.log('middleRightResizer.offsetWidth', middleRightResizer.offsetWidth);            
+            console.log('currentMiddleWidth', currentMiddleWidth);
+            console.log('currentRightWidth', currentRightWidth);
+            console.log('currentMiddleWidth + currentRightWidth', currentMiddleWidth + currentRightWidth);
+            console.log('remainingWidth', remainingWidth);
             if (currentMiddleWidth + currentRightWidth > remainingWidth) {
                 newLeftWidth = Math.min(newLeftWidth, containerRect.width - (minPanelWidth * 2 + leftMiddleResizer.offsetWidth + middleRightResizer.offsetWidth));
             }
+            console.log('newLeftWidth', newLeftWidth);
 
             leftPanel.style.width = `${newLeftWidth}px`;
 
@@ -83,10 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
         isResizing = false;
         if (activeResizer) {
             activeResizer.classList.remove('active');
-            if (activeResizer === middleRightResizer) {
-                middlePanel.style.width = '';
-                middlePanel.style.flexGrow = 1;
-            }
+            // if (activeResizer === middleRightResizer) {
+            //     middlePanel.style.width = '';
+            //     middlePanel.style.flexGrow = 1;
+            // }
         }
         activeResizer = null;
         document.body.style.userSelect = '';
@@ -130,8 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = imageCanvas.getContext('2d');
     const thumbnailGallery = document.getElementById('thumbnailGallery');
 
-    const addRectangleToolBtn = document.getElementById('add-rectangle-tool');
-    const addCircleToolBtn = document.getElementById('add-circle-tool');
+    const addRectangleToolBtn = document.getElementById('rectangle-tool');
+    const addCircleToolBtn = document.getElementById('circle-tool');
     const panToolBtn = document.getElementById('pan-tool');
     const defaultToolBtn = document.getElementById('default-tool'); // For zoom/pan mode
     const clearShapesBtn = document.getElementById('clear-shapes-btn');
@@ -255,12 +264,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const rectHeight = Math.abs(canvasCoordsStart.y - canvasCoordsEnd.y);
                 ctx.strokeRect(rectX, rectY, rectWidth, rectHeight);
             } else if (shape.type === 'circle') {
-                // Calculate radius in canvas coordinates
-                const radiusX = Math.abs(imageToCanvasCoords(shape.radiusX, 0, image, imageDrawInfo).x - imageToCanvasCoords(0, 0, image, imageDrawInfo).x);
-                const radiusY = Math.abs(imageToCanvasCoords(0, shape.radiusY, image, imageDrawInfo).y - imageToCanvasCoords(0, 0, image, imageDrawInfo).y);
-                // For a true circle, average or take the largest of the two radii in canvas coords
-                const radius = (radiusX + radiusY) / 2; 
 
+                const radius = shape.radius / image.width * zoomedWidth;
                 ctx.beginPath();
                 ctx.arc(canvasCoordsStart.x, canvasCoordsStart.y, radius, 0, 2 * Math.PI);
                 ctx.stroke();
@@ -467,7 +472,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Ensure image is redrawn to apply cursor change
         if (currentImageIndex !== -1 && loadedImages[currentImageIndex]) {
-             drawImageOnCanvas(loadedImages[currentImageIndex].img);
+            //  drawImageOnCanvas(loadedImages[currentImageIndex].img);
         }
     }
 
@@ -520,7 +525,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     img.src = dataUrl;
                 });
             });
-
+            // promise: when all the image is loaded into thumbnail, the code run into this snippet
             Promise.all(loadingPromises).then(() => {
                 if (loadedImages.length > 0) {
                     displayImage(0);
@@ -547,7 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // Initial canvas resize and tool activation
-    window.addEventListener('resize', () => resizeCanvas(true));
+    window.addEventListener('resize', () => resizeCanvas(true)); // no channel called resizer
     resizeCanvas(true);
     setActiveTool('default'); // Set default tool on initial load
 });

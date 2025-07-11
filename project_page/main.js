@@ -63,6 +63,7 @@ function createWindow() {
         }
         return { success: false, canceled: true };
     });
+    mainWindow.webContents.openDevTools();
 }
 
 app.whenReady().then(() => {

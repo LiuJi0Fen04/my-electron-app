@@ -108,3 +108,9 @@
         Avoids Conflicts: Variables like clickableAreas are now declared inside this private scope, not the global one. When the function finishes, this scope and its variables are discarded.
         Enables Reusability: When you load the script a second time, a new private scope is created for the new execution. Since the new variables are in a completely separate scope, they don't conflict with any from the previous execution.
     In short, the IIFE acts as a self-contained wrapper, ensuring that your script runs cleanly every time it's loaded without polluting the global scope or causing re-declaration errors.
+
+4. Bonus Tip: Dynamic Object Expansion
+    In JavaScript, arrays and objects are super flexible. You can start with an empty array, and start assigning complex objects to arbitrary indices, like:
+
+    javascript
+    myArray[3] = { data: "hi", more: [] };
