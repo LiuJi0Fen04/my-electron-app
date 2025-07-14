@@ -6,8 +6,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const rightTopPanel = document.querySelector('.right-top-panel');
     const rightBottomPanel = document.querySelector('.right-bottom-panel');
     const container = document.querySelector('.container');
-
-    const leftMiddleResizer = document.getElementById('left-middle-resizer');
+    let enable_left_resizer = false;
+    let leftMiddleResizer;
+    if(enable_left_resizer)
+        leftMiddleResizer = document.getElementById('left-middle-resizer');
+    else{
+        leftPanel.style['min-width'] = '150px';
+    }
     const middleRightResizer = document.getElementById('middle-right-resizer');
     const rightTopBottomResizer = document.getElementById('right-top-bottom-resizer');
 
@@ -35,9 +40,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const minPanelWidth = 100;
         const minPanelHeight = 50;
 
-        if (activeResizer === leftMiddleResizer) {
-            let newLeftWidth = e.clientX - containerRect.left;
-            newLeftWidth = Math.max(minPanelWidth, newLeftWidth);
+        if (enable_left_resizer && activeResizer === leftMiddleResizer) {
+                let newLeftWidth = e.clientX - containerRect.left;
+            if(enable_left_resizer)
+                newLeftWidth = Math.max(minPanelWidth, newLeftWidth);
+            else
+                newLeftWidth = minPanelWidth;
             const remainingWidth = containerRect.width - newLeftWidth - leftMiddleResizer.offsetWidth - middleRightResizer.offsetWidth;
 
             const currentMiddleWidth = middlePanel.getBoundingClientRect().width;
@@ -59,10 +67,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } else if (activeResizer === middleRightResizer) {
             const leftWidth = leftPanel.getBoundingClientRect().width;
-            let newMiddleWidth = e.clientX - leftWidth - leftMiddleResizer.offsetWidth - containerRect.left;
+            let newMiddleWidth;
+            if(enable_left_resizer)
+                newMiddleWidth = e.clientX - leftWidth - leftMiddleResizer.offsetWidth - containerRect.left;
+            else
+                newMiddleWidth = e.clientX - leftWidth - 2 - containerRect.left;
 
             newMiddleWidth = Math.max(minPanelWidth, newMiddleWidth);
-            const availableForMiddleAndRight = containerRect.width - leftWidth - leftMiddleResizer.offsetWidth - middleRightResizer.offsetWidth;
+            let availableForMiddleAndRight;
+            if(enable_left_resizer)
+                availableForMiddleAndRight = containerRect.width - leftWidth - leftMiddleResizer.offsetWidth - middleRightResizer.offsetWidth;
+            else
+                availableForMiddleAndRight = containerRect.width - leftWidth - 2 - middleRightResizer.offsetWidth;
+
             const currentRightWidth = rightPanelsContainer.getBoundingClientRect().width;
 
             if (newMiddleWidth + minPanelWidth > availableForMiddleAndRight) {
@@ -109,8 +126,8 @@ document.addEventListener('DOMContentLoaded', () => {
         imageCanvas.addEventListener('mouseleave', handleCanvasMouseLeave);
         imageCanvas.addEventListener('wheel', handleCanvasWheel);
     }
-
-    leftMiddleResizer.addEventListener('mousedown', (e) => startResizing(e, leftMiddleResizer));
+    if(enable_left_resizer)
+        leftMiddleResizer.addEventListener('mousedown', (e) => startResizing(e, leftMiddleResizer));
     middleRightResizer.addEventListener('mousedown', (e) => startResizing(e, middleRightResizer));
     rightTopBottomResizer.addEventListener('mousedown', (e) => startResizing(e, rightTopBottomResizer));
 
@@ -317,8 +334,9 @@ document.addEventListener('DOMContentLoaded', () => {
         lastMouseY = e.clientY;
 
         if (currentTool === 'default') {
-            if (e.button === 0 && loadedImages[currentImageIndex].state.zoom > 1.0) { // Left click and zoomed in
-                isDraggingImage = true;
+            // if (e.button === 0 && loadedImages[currentImageIndex].state.zoom > 1.0) { // Left click and zoomed in
+                if (e.button === 0) { // Left click and zoomed in
+                    isDraggingImage = true;
                 imageCanvas.style.cursor = 'grabbing';
             }
         } else if (currentTool === 'rectangle' || currentTool === 'circle') {
@@ -472,7 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Ensure image is redrawn to apply cursor change
         if (currentImageIndex !== -1 && loadedImages[currentImageIndex]) {
-            //  drawImageOnCanvas(loadedImages[currentImageIndex].img);
+             drawImageOnCanvas(loadedImages[currentImageIndex].img);
         }
     }
 
@@ -514,6 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         thumbnailGallery.appendChild(thumbnailDiv);
 
                         thumbnailDiv.addEventListener('click', () => {
+                            loadedImages[index].state = { zoom: 1.0, panX: 0, panY: 0 };
                             displayImage(index);
                         });
                         resolve();

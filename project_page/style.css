@@ -143,6 +143,8 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    width: 100%;          /* or fixed px */
+    max-width: 100%;
 }
 
 .canvas-header {
@@ -196,6 +198,8 @@
     flex-shrink: 0;
 }
 
+
+
 .right-bottom-panel {
     height: 150px;
     min-height: 100px;
@@ -213,7 +217,8 @@
     margin-bottom: 10px;
 }
 
-.thumbnail-gallery {
+
+/* .thumbnail-gallery {
     flex-grow: 1;
     display: flex;
     flex-wrap: wrap;
@@ -223,6 +228,21 @@
     border: 1px solid #3e4451;
     background-color: #31363f;
     border-radius: 4px;
+} */
+
+.thumbnail-gallery {
+    flex-grow: 0;
+    display: flex;
+    flex-direction:column;
+    gap: 10px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-bottom: 5px;
+    border: 1px solid #3e4451;
+    background-color: #31363f;
+    border-radius: 4px;
+    min-width: 100px;               /* prevent expanding past container */
+    max-height: 400px;               /* prevent expanding past container */
 }
 
 .thumbnail-item {
