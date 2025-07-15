@@ -15,7 +15,7 @@ if ($currentFolder -eq 'my-electron-app'){
     git add .
     git commit -m "$commitNote"
     $currentBranch = git rev-parse --abbrev-ref HEAD
-    Write-Output "现在在分支：$currentBranch"
+    Write-Output "current branch: $currentBranch"
     git push origin $current_branch
 }
 else{
