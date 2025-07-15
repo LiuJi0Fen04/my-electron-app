@@ -14,7 +14,9 @@ if ($currentFolder -eq 'my-electron-app'){
     Write-Output  "commit $commitNote to remote"
     git add .
     git commit -m "$commitNote"
-    git push origin master
+    current_branch=$(git rev-parse --abbrev-ref HEAD)
+    Write-Output "current branch: $current_branch"
+    git push origin $current_branch
 }
 else{
     Write-Output "> E: failed to find the folder 'my-electron-app'"
