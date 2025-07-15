@@ -87,10 +87,44 @@
     | `<nav>`        | Stands for navigation                |It wraps blocks of primary navigation links (e.g. a side panel’s menu). Helps with accessibility and SEO.
 
 
-| HTML Element | `createElement(...)` must use |
-| ------------ | ----------------------------- |
-| `<div>`      | `'div'`                       |
-| `<p>`        | `'p'`                         |
-| `<button>`   | `'button'`                    |
-| `<img>`      | `'img'`                       |
-| `<input>`    | `'input'`                     |
+    | HTML Element | `createElement(...)` must use |
+    | ------------ | ----------------------------- |
+    | `<div>`      | `'div'`                       |
+    | `<p>`        | `'p'`                         |
+    | `<button>`   | `'button'`                    |
+    | `<img>`      | `'img'`                       |
+    | `<input>`    | `'input'`                     |
+
+5. canvas
+    🖼️ <canvas> is an HTML element that provides a space where you can draw graphics dynamically using JavaScript. It’s like a blank digital canvas — perfect for creating 
+    visual elements such as charts, animations, games, or, in your case, image annotations and thumbnails.
+
+    Here’s what makes it special:
+
+    🎨 What <canvas> Does
+    Pixel-level drawing: You can draw shapes, lines, text, and even manipulate images at the pixel level.
+
+    Dynamic rendering: Unlike static images, canvas drawings can be updated in real time — ideal for interactive applications.
+
+    Supports 2D and 3D: With the 2D context (getContext('2d')) for basic drawing, or WebGL for 3D graphics.
+
+    🔧 Common Use Cases
+        +----------------------+------------------------------------------------------------+
+        | Use Case             | Description                                                |
+        +----------------------+------------------------------------------------------------+
+        | Image Editing        | Enable cropping, annotations, highlights, and overlays     |
+        +----------------------+------------------------------------------------------------+
+        | Data Visualizations  | Create charts, graphs, heatmaps, and custom visual flows   |
+        +----------------------+------------------------------------------------------------+
+        | Games                | Render 2D games with sprites, physics, and animations      |
+        +----------------------+------------------------------------------------------------+
+        | UI Enhancements      | Add dynamic overlays, tooltips, and selection boxes        |
+        +----------------------+------------------------------------------------------------+
+        | Real-Time Rendering  | Visualize live updates from user interaction or sensors    |
+        +----------------------+------------------------------------------------------------+
+        | Drawing Apps         | Support freehand drawing with brushes and erasers          |
+        +----------------------+------------------------------------------------------------+
+        | Annotation Tools     | Layer shapes, text, and icons over images or documents     |
+        +----------------------+------------------------------------------------------------+
+        | Map Overlays         | Add custom visuals or markers on top of map data           |
+        +----------------------+------------------------------------------------------------+

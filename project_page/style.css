@@ -1,4 +1,4 @@
-\html, body {
+html, body {
     height: 100%;
     margin: 0;
     overflow: hidden;
@@ -14,7 +14,7 @@
 }
 
 .left-panel {
-    width: 150px;
+    width: 250px;
     min-width: 100px;
     max-width: 50%;
     background-color: #3e4451;
@@ -30,7 +30,6 @@
     margin-bottom: 15px;
 }
 
-/* Styling for the new clickable tool areas */
 .tool-area {
     background-color: #4b5263;
     border: 1px solid #5c6370;
@@ -46,15 +45,14 @@
 }
 
 .tool-area.active {
-    background-color: #61afef; /* Highlight active tool */
+    background-color: #61afef;
     border-color: #61afef;
     color: #282c34;
 }
 
 .tool-area.active h3, .tool-area.active p {
-    color: #282c34; /* Darker text for contrast */
+    color: #282c34;
 }
-
 
 .tool-area h3 {
     color: #c678dd;
@@ -72,7 +70,7 @@
 #clear-shapes-btn {
     margin-top: 15px;
     padding: 8px 12px;
-    background-color: #e06c75; /* Reddish for clear action */
+    background-color: #e06c75;
     color: white;
     border: none;
     border-radius: 4px;
@@ -84,9 +82,8 @@
     background-color: #d15a6b;
 }
 
-/* Original message button (kept for context, can be removed) */
 #send-message-btn {
-    margin-top: auto; /* Push to bottom if no other content */
+    margin-top: auto;
     padding: 8px 12px;
     background-color: #98c379;
     color: black;
@@ -106,17 +103,17 @@
     color: #a0a8b4;
 }
 
-
 .horizontal-resizer {
-    width: 2px;
+    width: 8px;
     background-color: #5c6370;
     cursor: ew-resize;
     flex-shrink: 0;
 }
 
+/* Middle Panel Styles */
 .middle-panel {
     flex-grow: 1;
-    min-width: 350px;
+    min-width: 300px;
     background-color: #21252b;
     padding: 15px;
     box-sizing: border-box;
@@ -127,8 +124,194 @@
 .middle-panel h2 {
     color: #c678dd;
     margin-top: 0;
+    margin-bottom: 15px;
 }
 
+.middle-content-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+}
+
+/* Collapsible Toolbox Styles */
+.toolbox-wrapper {
+    position: relative; /* For absolute positioning of content */
+    width: 40px; /* Initial collapsed width */
+    background-color: #3e4451;
+    border-radius: 6px;
+    overflow: hidden; /* Hide content initially */
+    transition: width 0.3s ease-out; /* Smooth transition for width */
+    flex-shrink: 0;
+    height: 100%; /* Take full height of middle-content-wrapper */
+}
+
+.toolbox-wrapper:hover {
+    width: 180px; /* Expanded width on hover */
+}
+
+.toolbox-handle {
+    width: 40px; /* Fixed width for the handle */
+    height: 100%;
+    background-color: #5c6370;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: absolute; /* Position handle over content */
+    left: 0;
+    top: 0;
+    z-index: 2; /* Ensure handle is clickable */
+    writing-mode: vertical-rl; /* Rotate text */
+    text-orientation: mixed; /* Keep text upright */
+    transform: rotate(180deg); /* Rotate the handle text/arrow */
+    transition: background-color 0.2s ease;
+}
+
+.toolbox-wrapper:hover .toolbox-handle {
+    background-color: #61afef;
+    transform: rotate(0deg); /* Rotate back on hover */
+}
+
+.toolbox-handle h3 {
+    margin: 0;
+    font-size: 1em;
+    white-space: nowrap; /* Prevent text wrapping */
+}
+
+.toolbox-handle h3::before {
+    content: ''; /* Remove default arrow from h3 */
+}
+
+
+.toolbox-content {
+    position: absolute;
+    top: 0;
+    left: 40px; /* Start after the handle */
+    width: calc(100% - 40px); /* Fill remaining width */
+    height: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto; /* Allow scrolling if many buttons */
+}
+
+.toolbox-content h3 {
+    color: #61afef;
+    margin-top: 0;
+    margin-bottom: 5px;
+    font-size: 1em;
+}
+
+.toolbox-content .add-node-btn, #clear-nodes-btn {
+    padding: 8px 12px;
+    background-color: #98c379;
+    color: black;
+    border: none;
+    border-radius: 4px;
+    cursor: grab; /* Indicate draggable */
+    transition: background-color 0.2s ease;
+}
+
+.toolbox-content .add-node-btn:hover, #clear-nodes-btn:hover {
+    background-color: #8ac06b;
+}
+
+#clear-nodes-btn {
+    background-color: #e06c75;
+    color: white;
+    margin-top: auto;
+}
+#clear-nodes-btn:hover {
+    background-color: #d15a6b;
+}
+
+
+.procedure-canvas-container {
+    flex-grow: 1;
+    background-color: #31363f;
+    border-radius: 4px;
+    border: 1px solid #5c6370;
+    position: relative;
+    overflow: hidden;
+}
+
+#procedureCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+}
+
+/* Overview Window Styles (No change) */
+.overview-window-wrapper {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    z-index: 10;
+}
+
+.overview-toggle-btn {
+    background-color: #5c6370;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 1.2em;
+    line-height: 1;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    margin-bottom: 5px;
+}
+
+.overview-toggle-btn:hover {
+    background-color: #61afef;
+}
+
+.overview-toggle-btn.unfolded {
+    transform: rotate(180deg);
+}
+
+.overview-window {
+    background-color: #21252b;
+    border: 1px solid #61afef;
+    border-radius: 4px;
+    padding: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 150px;
+    height: 150px;
+}
+
+.overview-window.hidden {
+    display: none;
+}
+
+.overview-window h3 {
+    color: #e6c07b;
+    margin-top: 0;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+#overviewCanvas {
+    background-color: #31363f;
+    border: 1px solid #5c6370;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+
+/* Right Panels Container (No change) */
 .right-panels-container {
     display: flex;
     flex-direction: column;
@@ -143,8 +326,6 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    width: 100%;          /* or fixed px */
-    max-width: 100%;
 }
 
 .canvas-header {
@@ -181,24 +362,21 @@
     overflow: hidden;
     border-radius: 4px;
     border: 1px solid #5c6370;
-    position: relative; /* Needed for absolute positioning of drawing cursor helper */
+    position: relative;
 }
 
 #imageCanvas {
     max-width: 100%;
     max-height: 100%;
     display: block;
-    /* Cursor will be set by JS based on drawing mode */
 }
 
 .vertical-resizer {
-    height: 2px;
+    height: 8px;
     background-color: #5c6370;
     cursor: ns-resize;
     flex-shrink: 0;
 }
-
-
 
 .right-bottom-panel {
     height: 150px;
@@ -217,8 +395,7 @@
     margin-bottom: 10px;
 }
 
-
-/* .thumbnail-gallery {
+.thumbnail-gallery {
     flex-grow: 1;
     display: flex;
     flex-wrap: wrap;
@@ -228,21 +405,6 @@
     border: 1px solid #3e4451;
     background-color: #31363f;
     border-radius: 4px;
-} */
-
-.thumbnail-gallery {
-    flex-grow: 0;
-    display: flex;
-    flex-direction:column;
-    gap: 10px;
-    overflow-x: hidden;
-    overflow-y: auto;
-    padding-bottom: 5px;
-    border: 1px solid #3e4451;
-    background-color: #31363f;
-    border-radius: 4px;
-    min-width: 100px;               /* prevent expanding past container */
-    max-height: 400px;               /* prevent expanding past container */
 }
 
 .thumbnail-item {
@@ -272,8 +434,35 @@
     border-color: #56b6c2;
 }
 
-/* Active state for resizers */
 .horizontal-resizer.active,
 .vertical-resizer.active {
     background-color: #61afef;
+}
+
+/* Custom Context Menu Styles */
+.context-menu {
+    position: absolute;
+    background-color: #3e4451;
+    border: 1px solid #61afef;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1000; /* Ensure it's on top of everything */
+    padding: 5px 0;
+    min-width: 120px;
+}
+
+.context-menu.hidden {
+    display: none;
+}
+
+.context-menu-item {
+    padding: 8px 15px;
+    cursor: pointer;
+    color: #abb2bf;
+    font-size: 0.9em;
+}
+
+.context-menu-item:hover {
+    background-color: #4b5263;
+    color: #ffffff;
 }

@@ -35,8 +35,34 @@
         <div class="horizontal-resizer" id="left-middle-resizer"></div>
 
         <div class="middle-panel">
-            <h2>Middle Panel</h2>
-            <p>This panel will span the full height.</p>
+            <h2>Procedure Editor</h2>
+            <div class="middle-content-wrapper">
+                <div class="toolbox-wrapper"> <!-- New wrapper for the collapsible toolbox -->
+                    <div class="toolbox-handle">
+                        <h3>Tools &#9654;</h3> <!-- Right arrow, will rotate on hover -->
+                    </div>
+                    <div class="toolbox-content"> <!-- Content that unfolds -->
+                        <h3>Procedure Tools</h3>
+                        <button class="add-node-btn" data-node-type="step" draggable="true">Add Step</button>
+                        <button class="add-node-btn" data-node-type="decision" draggable="true">Add Decision</button>
+                        <button class="add-node-btn" data-node-type="start" draggable="true">Add Start</button>
+                        <button class="add-node-btn" data-node-type="end" draggable="true">Add End</button>
+                        <button id="clear-nodes-btn">Clear All Nodes</button>
+                    </div>
+                </div>
+                <div class="procedure-canvas-container">
+                    <canvas id="procedureCanvas"></canvas>
+                    <div class="overview-window-wrapper">
+                        <button id="toggle-overview-btn" class="overview-toggle-btn">
+                            &#9650;
+                        </button>
+                        <div class="overview-window hidden">
+                            <h3>Overview</h3>
+                            <canvas id="overviewCanvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="horizontal-resizer" id="middle-right-resizer"></div>
@@ -49,18 +75,22 @@
                 </div>
                 <div class="canvas-container">
                     <canvas id="imageCanvas"></canvas>
-                    <div class="thumbnail-gallery" id="thumbnailGallery">
-                    </div>                    
                 </div>
-
-                
             </div>
             <div class="vertical-resizer" id="right-top-bottom-resizer"></div>
             <div class="right-bottom-panel">
                 <h2>Thumbnail Gallery</h2>
-
+                <div class="thumbnail-gallery" id="thumbnailGallery">
+                    <!-- Thumbnails will be injected here -->
+                </div>
             </div>
         </div>
+    </div>
+
+    <!-- Custom Context Menu for Procedure Nodes -->
+    <div id="node-context-menu" class="context-menu hidden">
+        <div class="context-menu-item" id="context-delete-node">Delete Node</div>
+        <div class="context-menu-item" id="context-copy-node">Copy Node</div>
     </div>
 
     <script src="renderer.js"></script>
