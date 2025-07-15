@@ -11,7 +11,7 @@ $currentFolder = Split-path -Leaf (Get-Location)
 
 
 if ($currentFolder -eq 'my-electron-app'){
-    Write-Output  "> commit $commitNote to remote"
+    Write-Output  "> commit '$commitNote' to remote"
     git add .
     git commit -m "$commitNote"
     $currentBranch = git rev-parse --abbrev-ref HEAD
