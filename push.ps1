@@ -14,7 +14,7 @@ if ($currentFolder -eq 'my-electron-app'){
     Write-Output  "commit $commitNote to remote"
     git add .
     git commit -m "$commitNote"
-    current_branch=$(git rev-parse --abbrev-ref HEAD)
+    $currentBranch = git rev-parse --abbrev-ref HEAD
     Write-Output "current branch: $current_branch"
     git push origin $current_branch
 }
