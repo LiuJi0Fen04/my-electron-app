@@ -9,7 +9,7 @@ html, body {
 
 .container {
     display: flex;
-    height: 100%;
+    height: 95%;
     border: 1px solid #3e4451;
 }
 
@@ -465,4 +465,70 @@ html, body {
 .context-menu-item:hover {
     background-color: #4b5263;
     color: #ffffff;
+}
+
+/* New styles for the tool activators and sub-tool windows */
+.procedure-tools-container {
+    display: flex; /* Arrange activators horizontally */
+    gap: 10px; /* Space between activators */
+    margin-bottom: 10px;
+    position: relative; /* For positioning sub-tool windows relative to this container */
+}
+
+.tool-activator {
+    width: 50px;
+    height: 50px;
+    background-color: #555;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 0.8em;
+    text-align: center;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    transition: background-color 0.2s ease-in-out;
+}
+
+.tool-activator:hover {
+    background-color: #777;
+}
+
+.tool-activator h3 {
+    margin: 0;
+    padding: 0;
+    line-height: 1; /* Adjust line height for better centering */
+}
+
+.sub-tool-window {
+    position: absolute;
+    top: 60px; /* Position below the activators */
+    background-color: #333;
+    border: 1px solid #666;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    padding: 10px;
+    z-index: 1000; /* Ensure it appears on top */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sub-tool-window.hidden {
+    display: none;
+}
+
+.sub-tool-window button {
+    background-color: #666;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: grab; /* Indicate draggable */
+    transition: background-color 0.2s ease-in-out;
+}
+
+.sub-tool-window button:hover {
+    background-color: #888;
 }

@@ -37,17 +37,23 @@
         <div class="middle-panel">
             <h2>Procedure Editor</h2>
             <div class="middle-content-wrapper">
-                <div class="toolbox-wrapper"> <!-- New wrapper for the collapsible toolbox -->
-                    <div class="toolbox-handle">
-                        <h3>Tools &#9654;</h3> <!-- Right arrow, will rotate on hover -->
+                <div class="procedure-tools-container">
+                    <div class="tool-activator" id="add-tools-activator">
+                        <h3>Add</h3>
                     </div>
-                    <div class="toolbox-content"> <!-- Content that unfolds -->
-                        <h3>Procedure Tools</h3>
+                    <div class="tool-activator" id="calibration-tools-activator">
+                        <h3>Calibrate</h3>
+                    </div>
+
+                    <div id="add-tools-window" class="sub-tool-window hidden">
                         <button class="add-node-btn" data-node-type="step" draggable="true">Add Step</button>
                         <button class="add-node-btn" data-node-type="decision" draggable="true">Add Decision</button>
                         <button class="add-node-btn" data-node-type="start" draggable="true">Add Start</button>
                         <button class="add-node-btn" data-node-type="end" draggable="true">Add End</button>
-                        <button id="clear-nodes-btn">Clear All Nodes</button>
+                    </div>
+                    <div id="calibration-tools-window" class="sub-tool-window hidden">
+                        <button class="calibration-tool-btn" data-tool-type="measure" draggable="true">Measure</button>
+                        <button class="calibration-tool-btn" data-tool-type="align" draggable="true">Align</button>
                     </div>
                 </div>
                 <div class="procedure-canvas-container">
@@ -62,6 +68,7 @@
                         </div>
                     </div>
                 </div>
+                <button id="clear-nodes-btn">Clear All Nodes</button>
             </div>
         </div>
 
@@ -76,18 +83,17 @@
                 <div class="canvas-container">
                     <canvas id="imageCanvas"></canvas>
                 </div>
+                <div class="thumbnail-gallery" id="thumbnailGallery">
+                    </div>                
             </div>
             <div class="vertical-resizer" id="right-top-bottom-resizer"></div>
             <div class="right-bottom-panel">
                 <h2>Thumbnail Gallery</h2>
-                <div class="thumbnail-gallery" id="thumbnailGallery">
-                    <!-- Thumbnails will be injected here -->
-                </div>
+
             </div>
         </div>
     </div>
 
-    <!-- Custom Context Menu for Procedure Nodes -->
     <div id="node-context-menu" class="context-menu hidden">
         <div class="context-menu-item" id="context-delete-node">Delete Node</div>
         <div class="context-menu-item" id="context-copy-node">Copy Node</div>

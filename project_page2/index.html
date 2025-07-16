@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <title>Electron Four-Part Layout</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <h2>Tools</h2>
+
+        </div>
+
+        <div class="horizontal-resizer" id="left-middle-resizer"></div>
+
+        <div class="middle-panel">
+            <h2>Procedure Editor</h2>
+
+        </div>
+
+        <div class="horizontal-resizer" id="middle-right-resizer"></div>
+
+        <div class="right-panels-container">
+            <div class="right-top-panel">
+                
+            </div>
+            <div class="vertical-resizer" id="right-top-bottom-resizer"></div>
+            <div class="right-bottom-panel">
+                <h2>Thumbnail Gallery</h2>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="node-context-menu" class="context-menu hidden">
+        <div class="context-menu-item" id="context-delete-node">Delete Node</div>
+        <div class="context-menu-item" id="context-copy-node">Copy Node</div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
