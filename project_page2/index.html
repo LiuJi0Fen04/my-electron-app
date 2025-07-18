@@ -10,6 +10,18 @@
     <div class="container">
         <div class="left-panel">
             <h2>Tools</h2>
+            <div class="tool-area" id="rectangle-tool">
+                <h3>Add Rectangle</h3>
+            </div>
+            <div class="tool-area" id="circle-tool">
+                <h3>Add Circle</h3>
+            </div>
+            <div class="tool-area" id="pan-tool">
+                <h3>Pan Image</h3>
+            </div>
+            <div class="tool-area active" id="default-tool">
+                <h3>Select/Zoom/Pan</h3>
+            </div>
 
         </div>
 
@@ -24,7 +36,14 @@
 
         <div class="right-panels-container">
             <div class="right-top-panel">
-                
+                <div class="canvas-header">
+                    <button id="open-folder-btn">Open Image Folder</button>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="imageCanvas"></canvas>
+                    <div class="thumbnail-gallery" id="thumbnailGallery">
+                    </div>                       
+                </div>
             </div>
             <div class="vertical-resizer" id="right-top-bottom-resizer"></div>
             <div class="right-bottom-panel">

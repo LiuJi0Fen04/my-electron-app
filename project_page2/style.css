@@ -9,6 +9,258 @@ html, body {
 
 .container {
     display: flex;
-    height: 90%;
+    height: 95%; /* Adjust as needed, or 100vh for full viewport height */
     border: 1px solid #3e4451;
+    box-sizing: border-box; /* Ensure padding and border are included in the element's total width/height */
+}
+
+.left-panel {
+    width: 200px; /* Initial width, will be manipulated by JS */
+    min-width: 100px;
+    max-width: 200px;
+    flex-shrink: 0; /* Prevent shrinking below its width */
+    background-color: #3e4451;
+    padding: 15px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.left-panel h2 {
+    color: #61afef;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.tool-area {
+    background-color: #4b5263;
+    border: 1px solid #5c6370;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 1px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.tool-area:hover {
+    background-color: #5c6370;
+}
+
+.tool-area.active {
+    background-color: #61afef;
+    border-color: #61afef;
+    color: #282c34;
+}
+
+.tool-area.active h3, .tool-area.active p {
+    color: #282c34;
+}
+
+.tool-area h3 {
+    color: #c678dd;
+    margin-top: 0;
+    margin-bottom: 5px;
+    font-size: 1.1em;
+}
+
+.horizontal-resizer {
+    width: 2px;
+    background-color: #5c6370;
+    cursor: ew-resize;
+    flex-shrink: 0; /* Prevent the resizer from shrinking */
+}
+
+/* Middle Panel Styles */
+.middle-panel {
+    flex-grow: 1; /* This panel will take up all available space */
+    min-width: 300px; /* Minimum width for the middle panel */
+    background-color: #21252b;
+    padding: 15px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.middle-panel h2 {
+    color: #c678dd;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+/* Right Panels Container */
+.right-panels-container {
+    display: flex;
+    height: 100%;
+    flex-direction: column; /* For vertical resizing within this container */
+    width: 50%; /* Initial width, will be manipulated by JS */
+    min-width: 250px; /* Minimum width for the right panels */
+    flex-shrink: 0; /* Prevent shrinking below its width */
+}
+
+.vertical-resizer {
+    height: 2px;
+    background-color: #5c6370;
+    cursor: ns-resize;
+    flex-shrink: 0; /* Prevent the resizer from shrinking */
+}
+
+.right-top-panel {
+    flex-grow: 0; /* This will grow to fill space, enable this line will cause the top-right panel to expend in column */
+    height: 70%;
+    min-height: 50%;
+    background-color: #21252b;
+    padding: 15px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.right-bottom-panel {
+    flex-grow: 1; /* This will grow to fill space */
+    min-height: 100px;
+    background-color: #21252b;
+    padding: 15px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.right-bottom-panel h2 {
+    color: #e6c07b;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+#open-folder-btn {
+    padding: 6px 10px;
+    background-color: #d19a66;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#open-folder-btn:hover {
+    background-color: #c08b5a;
+}
+
+.horizontal-resizer.active,
+.vertical-resizer.active {
+    background-color: #61afef;
+}
+
+.horizontal-resizer:hover,
+.vertical-resizer:hover {
+    background-color: #61afef;
+}
+
+/* Context Menu Styles ------------------------------------------------------------------------*/
+.context-menu {
+    position: absolute;
+    background-color: #3e4451;
+    border: 1px solid #5c6370;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    padding: 5px 0;
+}
+
+.context-menu.hidden {
+    display: none;
+}
+
+.context-menu-item {
+    padding: 8px 15px;
+    color: #abb2bf;
+    cursor: pointer;
+}
+
+.context-menu-item:hover {
+    background-color: #61afef;
+    color: #282c34;
+}
+
+
+
+/*image showing part*/
+.canvas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.canvas-header h2 {
+    color: #e6c07b;
+    margin: 0;
+}
+
+.canvas-container {
+    display: flex; /* Arrange children side by side */
+    height: 100%;  /* Make sure it fills parent container */
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Image canvas on the left */
+#imageCanvas {
+    flex: 1; /* Take remaining space */
+    background-color: #1e1e1e; /* Optional for visibility */
+    max-width: 100%;
+    width: 50px;
+    height: auto;
+}
+
+/* Thumbnail gallery on the right */
+.thumbnail-gallery {
+    /* display: flex; */
+    flex-direction: column;
+    overflow-y: auto; /* Scrollbar appears if content overflows vertically */
+    background-color: #2e2e2e; /* Optional background */
+    gap: 10px; /* Space between thumbnails */
+    box-sizing: border-box;
+}
+
+.thumbnail-gallery::-webkit-scrollbar {
+    width: 8px;
+}
+
+.thumbnail-gallery::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.thumbnail-gallery::-webkit-scrollbar-thumb {
+    background-color: #666;
+    border-radius: 4px;
+}
+.thumbnail-item {
+    width: 80px;
+    height: 60px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.thumbnail-item img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.thumbnail-item.active {
+    border-color: #61afef;
+}
+
+.thumbnail-item:hover {
+    border-color: #56b6c2;
+}
+
+.horizontal-resizer.active,
+.vertical-resizer.active {
+    background-color: #61afef;
 }

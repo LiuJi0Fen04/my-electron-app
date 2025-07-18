@@ -18,7 +18,7 @@ function createWindow() {
 
     mainWindow.loadFile('index.html');
 
-    // mainWindow.webContents.openDevTools(); // Uncomment for debugging
+    mainWindow.webContents.openDevTools(); // Uncomment for debugging
 
     ipcMain.on('send-message-to-main', (event, message) => {
         console.log('Message from renderer:', message);
