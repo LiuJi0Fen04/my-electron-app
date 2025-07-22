@@ -121,156 +121,45 @@ document.addEventListener('DOMContentLoaded', () => {
     let drawnShapes = []; // Array to store completed shapes
     let thumbnail_width = 0; // for record the width of thumbnail 
     let scrollbar_width = 0; // for record the width of scrollbar
-    let activeImageIndex = -1; // Keep track of the currently active image index
 
     // Virtual scrolling flag: set to 1 to enable virtual scrolling, 0 for Intersection Observer
     const virtual_scroll_flag = 1;
 
     if (virtual_scroll_flag){
         let totalCount = 0;
-        const buffer = 5; // render 5 extra images above and below view
-        const imageHeight = 64; // thumbnail item height (60px) + vertical gap (10px) = 70px. Adjust this if your CSS gap changes!
+        const buffer = 5; // render 5 extra images above and belowe view
+        const imageHeight = 64; // thumbnail item height and padding 
+    let activeImageIndex = -1; // Keep track of the active image index
 
-        // Create spacer elements once at initialization
-        const topSpacer = document.createElement('div');
-        topSpacer.id = 'top-spacer';
-        thumbnailGallery.prepend(topSpacer); // Add to the beginning
-
-        const bottomSpacer = document.createElement('div');
-        bottomSpacer.id = 'bottom-spacer';
-        thumbnailGallery.appendChild(bottomSpacer); // Add to the end
-
-        /**
-         * create resized thumbnail image
-         * @param {*} filePath 
-         * @param {*} maxWidth 
-         * @param {*} maxHeight 
-         * @returns 
-         */
-        function createThumbnail(filePath, maxWidth = 200, maxHeight = 200) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-        
-                    // Calculate new dimensions while preserving aspect ratio
-                    let ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
-                    let width = img.width * ratio;
-                    let height = img.height * ratio;
-        
-                    canvas.width = width;
-                    canvas.height = height;
-        
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-        
-                    // Get the resized image as a Data URL
-                    const thumbnailDataUrl = canvas.toDataURL('image/jpeg', 0.7); // 0.7 = quality
-        
-                    resolve(thumbnailDataUrl);
-                };
-                img.onerror = reject;
-        
-                img.src = filePath;
-            });
-        }
-
-
-        /**
-         * Renders the visible thumbnails based on scroll position.
-         * This function uses absolute positioning and spacers for virtual scrolling.
-         */
         function renderVisibleThumbnails() {
             const scrollTop = thumbnailGallery.scrollTop;
             const containerHeight = thumbnailGallery.clientHeight;
             // Calculate start and end index for visible items, including buffer
             const startIdx = Math.max(0, Math.floor(scrollTop / imageHeight) - buffer);
             const endIdx = Math.min(totalCount, Math.ceil((scrollTop + containerHeight) / imageHeight) + buffer);
-
-            // Get currently rendered items to determine what to remove and what to add
-            const currentRenderedItems = thumbnailGallery.querySelectorAll('.thumbnail-item');
-            const currentRenderedIndexes = new Set(Array.from(currentRenderedItems).map(item => parseInt(item.dataset.index)));
-
-            const itemsToAdd = new Set();
-            const itemsToKeep = new Set();
-
-            // Populate itemsToAdd and itemsToKeep based on the new visible range
+            console.log('containerHeight, scrollTop, startIdx, endIdx: ', containerHeight ,scrollTop, startIdx, endIdx);
+            thumbnailGallery.innerHTML = ''; // Clear old thumbnails
             for (let i = startIdx; i < endIdx; i++) {
-                if (!currentRenderedIndexes.has(i)) {
-                    itemsToAdd.add(i);
-                } else {
-                    itemsToKeep.add(i);
-                }
-            }
-
-            // Remove items that are no longer visible
-            currentRenderedIndexes.forEach(index => {
-                if (!itemsToKeep.has(index)) {
-                    const item = thumbnailGallery.querySelector(`.thumbnail-item[data-index="${index}"]`);
-                    if (item) {
-                        item.remove();
-                    }
-                }
-            });
-
-            // Add new items
-            itemsToAdd.forEach(i => {
                 const thumbDiv = document.createElement('div');
                 thumbDiv.classList.add('thumbnail-item');
                 thumbDiv.dataset.index = i;
-                thumbDiv.style.position = 'absolute'; // Crucial for absolute positioning
-                thumbDiv.style.top = `${i * imageHeight}px`; // Position based on calculated index height
-
                 const file = imageFiles[i];
                 const filePath = `file://${folderPath}/${file}`;
 
                 const img = document.createElement('img');
-                const memory_save = 0;
-                if(memory_save){
-                    createThumbnail(filePath).then(thumbnailUrl => {
-                        img.src = thumbnailUrl;
-                        img.alt = `Thumbnail ${i + 1}`;
-                        thumbDiv.appendChild(img);
-                    });                    
-                }
-                else{
-                    img.src = filePath;
-                    img.alt = `Thumbnail ${i + 1}`;
-                    thumbDiv.appendChild(img);                    
-                }
-
-
-
-                // Add active class if this is the currently displayed image
-                if (i === activeImageIndex) {
-                    thumbDiv.classList.add('active');
-                }
+                img.src = filePath;
+                img.alt = `Thumbnail ${i + 1}`;
+                thumbDiv.appendChild(img);
 
                 thumbDiv.addEventListener('click', () => {
                     displayImage(i);
-                    // No need to remove/add active class here, displayImage handles it
+                    document.querySelectorAll('.thumbnail-item').forEach(item => item.classList.remove('active'));
+                    thumbDiv.classList.add('active');
                 });
+                thumbnailGallery.appendChild(thumbDiv);
+            }
 
-                // Insert the new thumbnail in the correct sorted position to maintain order
-                let inserted = false;
-                const existingThumbnails = thumbnailGallery.querySelectorAll('.thumbnail-item');
-                for (let j = 0; j < existingThumbnails.length; j++) {
-                    if (parseInt(existingThumbnails[j].dataset.index) > i) {
-                        thumbnailGallery.insertBefore(thumbDiv, existingThumbnails[j]);
-                        inserted = true;
-                        break;
-                    }
-                }
-                if (!inserted) {
-                    thumbnailGallery.insertBefore(thumbDiv, bottomSpacer); // Insert before the bottom spacer if it's the last
-                }
-            });
-
-            // Adjust spacer heights to simulate the total scrollable height
-            topSpacer.style.height = `${startIdx * imageHeight}px`;
-            bottomSpacer.style.height = `${(totalCount - endIdx) * imageHeight}px`;
         }
-
         openFolderBtn.addEventListener('click', async () => {
             if (typeof window.electronAPI !== 'undefined') {
                 const result = await window.electronAPI.openImageFolder();
@@ -278,104 +167,30 @@ document.addEventListener('DOMContentLoaded', () => {
                     totalCount = result.images.length;
                     folderPath = result.folderPath;
                     imageFiles = result.images;
-                    
-                    // Clear existing thumbnails (but keep the spacers)
-                    Array.from(thumbnailGallery.children).forEach(child => {
-                        if (child.classList.contains('thumbnail-item')) {
-                            child.remove();
-                        }
-                    });
+                    thumbnailGallery.innerHTML = ''; // Clear existing thumbnails
 
                     if (imageFiles.length === 0) {
                         currentImage.src = '';
                         currentImage.alt = 'No supported image formats found in this folder.';
-                        // Also reset totalCount and spacer heights if no images
-                        totalCount = 0;
-                        topSpacer.style.height = '0px';
-                        bottomSpacer.style.height = '0px';
-                        return;
+                        return;   // can this work 
                     }
-                    
-                    // Initial render of visible thumbnails
                     renderVisibleThumbnails();
-                    
-                    let lastScrollTop = 0;
-                    let lastTimestamp = performance.now();
-                    let scrollTimeout = null;
-                    let speedExcedRecord = 0;
-                    let scrollStopTimer;
-                    // Add scroll event listener for continuous rendering
                     thumbnailGallery.addEventListener('scroll', () => {
-                        speedExcedRecord = 0;
-                        const now = performance.now();
-                        const currentScrollTop = thumbnailGallery.scrollTop;
-                        
-                        const deltaY = Math.abs(currentScrollTop - lastScrollTop);
-                        const deltaTime = now - lastTimestamp;
-                        const scrollSpeed = deltaY / deltaTime; // px per ms
-                        // console.log('scrollSpeed, deltaTime: ', scrollSpeed, deltaTime);
-                        if(scrollSpeed < 0.4){
-                            if (!scrollTimeout){
-                                scrollTimeout = setTimeout(() => {
-                                    renderVisibleThumbnails();
-                                    scrollTimeout = null;
-                                    speedExcedRecord = 0;
-                                    // console.log('low speed stop and loading image');
-                                }, 0);
-                            }
-                        }
-                        else{
-                            speedExcedRecord = 1;
-                        }
-                        lastScrollTop = currentScrollTop;
-                        lastTimestamp = now;
-
-                        // prevent stopping at high speed scrolling
-                        clearTimeout(scrollStopTimer);
-                        scrollStopTimer = setTimeout(() => {
-                            if(speedExcedRecord == 1){
-                                // console.log('high speed stop and loading image');
-                                renderVisibleThumbnails();                        
-                            }
-                        }, 50);
-
-                        // if(speedExcedRecord == 1){
-                        //     clearTimeout(scrollStopTimer);
-                        //     scrollStopTimer = setTimeout(() => {
-                        //         console.log('high speed stop and loading image');
-                        //         renderVisibleThumbnails();
-                        //     }, 50);
-                        // }
+                        renderVisibleThumbnails();
                     });    
-                    
-                    // Calculate thumbnail width and scrollbar width
-                    // Assuming .thumbnail-item has a fixed width of 80px + 2*2px border = 84px for calculation
-                    // Or, dynamically measure one if it's rendered
-                    const tempThumb = document.createElement('div');
-                    tempThumb.classList.add('thumbnail-item');
-                    // Temporarily append to body to get computed style if not already in DOM
-                    document.body.appendChild(tempThumb);
-                    thumbnail_width = tempThumb.getBoundingClientRect().width;
-                    tempThumb.remove(); // Clean up
-
+                    thumbnail_width = document.querySelector('.thumbnail-item').getBoundingClientRect().width;
                     scrollbar_width = thumbnailGallery.offsetWidth - thumbnailGallery.clientWidth;
-                    
                     // Display the first image by default
                     displayImage(0);
-                    // The displayImage function will now handle adding the 'active' class
+                    if (imageFiles.length > 0) {
+                        thumbnailGallery.querySelector('.thumbnail-item').classList.add('active');
+                    }
                 } else if (result.error) {
-                    // Using a custom message box instead of alert() as per instructions
-                    dialog.showMessageBox(mainWindow, {
-                        type: 'error',
-                        title: 'Error',
-                        message: `Error opening folder: ${result.error}`
-                    });
-                } else if (result.canceled) {
-                    console.log('Folder selection canceled.');
-                }
+                    alert(`Error opening folder: ${result.error}`);
+                };
             }
         });
-    } // End of virtual scrolling block
+    } // virtuall rolling
     else{
         // create the intersection observer
         const observer = new IntersectionObserver((entries, observer) => {
@@ -384,19 +199,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     const thumb = entry.target.querySelector('img');
                     const realSrc = thumb.dataset.src; // get the real image path from the data-src
 
-                    // set the real image path to the src attribute
+                    // set the reak image path to the src attribute
                     thumb.src = realSrc;
-                    // once loaded, we don't need to observe it any more
-                    observer.unobserve(entry.target); // Observe the div, not the img
+                    // once loaded, we don't need to observe itt any more
+                    observer.unobserve(thumb);
                 }
             });
         }, {
             // use thumbnailGallery as the area to track intersection (viewPort)
             root: thumbnailGallery,
-            // add a margin to load images just before they become visible
+            // add a margin to load imagesjust before they become visible
             rootMargin: '500px 0px 500px 0px'   // top right bottom left
-        });
 
+        });
         openFolderBtn.addEventListener('click', async () => {
             if (typeof window.electronAPI !== 'undefined') {
                 const result = await window.electronAPI.openImageFolder();
@@ -408,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (imageFiles.length === 0) {
                         currentImage.src = '';
                         currentImage.alt = 'No supported image formats found in this folder.';
-                        return;
+                        return;   // can this work 
                     }
     
                     imageFiles.forEach((file, index) => {
@@ -416,88 +231,51 @@ document.addEventListener('DOMContentLoaded', () => {
                         thumbDiv.classList.add('thumbnail-item');
                         thumbDiv.dataset.index = index;
     
+                        // You're using backticks (\``) because this syntax represents a **template literal** in JavaScript. Template literals allow you to embed variables directly inside a string using **${}`** syntax, making string concatenation more readable and efficient.
                         const filePath = `file://${folderPath}/${file}`;
     
                         const img = document.createElement('img');
-                        img.dataset.src = filePath; // Store real path in data-src
+                        img.dataset.src = filePath;
                         img.alt = `Thumbnail ${index + 1}`;
                         thumbDiv.appendChild(img);
     
                         thumbDiv.addEventListener('click', () => {
                             displayImage(index);
-                            // displayImage now handles active class removal/addition
+                            document.querySelectorAll('.thumbnail-item').forEach(item => item.classList.remove('active'));
+                            thumbDiv.classList.add('active');
                         });
                         thumbnailGallery.appendChild(thumbDiv);
-                        observer.observe(thumbDiv); // Observe the thumbnail div
+                        observer.observe(thumbDiv);
                     });
-                    
-                    // Calculate thumbnail width and scrollbar width after thumbnails are added
-                    if (imageFiles.length > 0) {
-                        // Assuming .thumbnail-item has a fixed width of 80px + 2*2px border = 84px for calculation
-                        const firstThumb = document.querySelector('.thumbnail-item');
-                        if (firstThumb) {
-                            thumbnail_width = firstThumb.getBoundingClientRect().width;
-                        } else {
-                            // Fallback if no thumbnails are immediately available (e.g., if gallery is empty)
-                            thumbnail_width = 84; // Default based on CSS
-                        }
-                    }
+                    thumbnail_width = document.querySelector('.thumbnail-item').getBoundingClientRect().width;
                     scrollbar_width = thumbnailGallery.offsetWidth - thumbnailGallery.clientWidth;
-
                     // Display the first image by default
                     displayImage(0);
+                    if (imageFiles.length > 0) {
+                        thumbnailGallery.querySelector('.thumbnail-item').classList.add('active');
+                    }
                 } else if (result.error) {
-                    // Using a custom message box instead of alert() as per instructions
-                    dialog.showMessageBox(mainWindow, {
-                        type: 'error',
-                        title: 'Error',
-                        message: `Error opening folder: ${result.error}`
-                    });
-                } else if (result.canceled) {
-                    console.log('Folder selection canceled.');
-                }
+                    alert(`Error opening folder: ${result.error}`);
+                };
             }
         });
-    } // End of intersection observer block
-
-    /**
-     * Displays the image at the given index on the main canvas.
-     * Also updates the 'active' class on the corresponding thumbnail.
-     * @param {number} index - The index of the image to display.
-     */
+    } // intersection observer
     function displayImage(index) {
         if (index >= 0 && index < imageFiles.length) {
-            activeImageIndex = index; // Update the active index
+            activeImageIndex = index;
             currentImage.src = `file://${folderPath}/${imageFiles[index]}`;
             currentImage.onload = () => {
                 resizeImageCanvas(true); // Recalculate pan/zoom for new image
             };
             drawnShapes = []; // Clear shapes when new image is displayed
-
-            // Remove 'active' class from all thumbnails
-            document.querySelectorAll('.thumbnail-item').forEach(item => item.classList.remove('active'));
-            
-            // Add 'active' class to the newly selected thumbnail
-            const activeThumb = thumbnailGallery.querySelector(`.thumbnail-item[data-index="${index}"]`);
-            if (activeThumb) {
-                activeThumb.classList.add('active');
-            }
-            // If using virtual scrolling, the active thumbnail might not be rendered yet.
-            // When it gets rendered, renderVisibleThumbnails will apply the active class.
         }
     }
 
-    /**
-     * Resizes the image canvas and redraws the image and shapes.
-     * @param {boolean} initial - If true, recalculates initial pan and zoom to fit the image.
-     */
     function resizeImageCanvas(initial = false) {
         const container = imageCanvas.parentElement;
 
-        // Adjust canvas width based on container width and thumbnail gallery width
         imageCanvas.width = container.clientWidth - thumbnail_width - scrollbar_width - 5;
         imageCanvas.height = container.clientHeight;
-
         if (initial) {
             // Initial centering and fitting
             if (currentImage.src) {
@@ -518,9 +296,6 @@ document.addEventListener('DOMContentLoaded', () => {
         drawImage();
     }
 
-    /**
-     * Draws the current image and any drawn shapes on the canvas.
-     */
     function drawImage() {
         imageCtx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
         if (currentImage.src) {
@@ -535,7 +310,6 @@ document.addEventListener('DOMContentLoaded', () => {
             imageCtx.lineWidth = 2;
             drawnShapes.forEach(shape => {
                 imageCtx.beginPath();
-                // Scale shape coordinates based on current zoom and pan
                 const startX = (shape.startX * imageZoom) + imagePan.x;
                 const startY = (shape.startY * imageZoom) + imagePan.y;
                 const endX = (shape.endX * imageZoom) + imagePan.x;
@@ -550,7 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // Draw current drawing shape (if any)
+            // Draw current drawing shape
             if (drawingShape) {
                 imageCtx.beginPath();
                 imageCtx.strokeStyle = '#61afef'; // Blueish color for active drawing
@@ -572,5 +346,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // This is the end of the code 
+    // this is the end of the code 
 });

@@ -7,8 +7,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
         ipcRenderer.send('open-settings-window');
     },
     // NEW: Expose function to open image folder
-    openImageFolder: () => ipcRenderer.invoke('open-image-folder'),
-    loadImageFile: (filePath) => ipcRenderer.invoke('load-image-file', filePath)
+    openImageFolder: () => ipcRenderer.invoke('open-image-folder')
 });
 
 ipcRenderer.on('message-from-main', (event, message) => {

@@ -213,15 +213,15 @@ html, body {
 
 /* Thumbnail gallery on the right */
 .thumbnail-gallery {
-    /* display: flex; -- REMOVED: No longer needed with absolute positioning */
+    /* existing styles add this for absolute positioning of children*/
+    position: relative;
+
+    /* display: flex; */
     flex-direction: column;
     overflow-y: auto; /* Scrollbar appears if content overflows vertically */
     background-color: #2e2e2e; /* Optional background */
-    /* gap: 10px; -- REMOVED: Gap property won't work with absolute positioning */
+    gap: 10px; /* Space between thumbnails */
     box-sizing: border-box;
-    position: relative; /* ADDED: Important for absolute positioning of children */
-    width: 88px; /* Set a fixed width for the gallery */
-    height: 100%; /* Ensure it takes full height of its container */
 }
 
 .thumbnail-gallery::-webkit-scrollbar {
@@ -236,24 +236,18 @@ html, body {
     background-color: #666;
     border-radius: 4px;
 }
-
 .thumbnail-item {
-    width: 80px; /* Fixed width */
-    height: 60px; /* Fixed height */
+    /* position: absolute; */
+    width: 80px;
+    height: 60px;
     border: 2px solid transparent;
     cursor: pointer;
     transition: border-color 0.2s ease;
     overflow: hidden;
     flex-shrink: 0;
-    display: flex; /* Keep for centering image inside thumbnail */
-    justify-content: center; /* Keep for centering image inside thumbnail */
-    align-items: center; /* Keep for centering image inside thumbnail */
-    
-    position: absolute; /* ADDED: Crucial for virtual scrolling */
-    left: 0; /* ADDED: Position from left */
-    /* The 'top' property will be set dynamically by JavaScript */
-    box-sizing: border-box; /* Ensure padding and border are included in total size */
-    margin-bottom: 10px; /* ADDED: To simulate the gap that was removed */
+    /* display: flex;
+    justify-content: center;
+    align-items: center; */
 }
 
 .thumbnail-item img {
@@ -275,8 +269,14 @@ html, body {
     background-color: #61afef;
 }
 
-/* Spacers for virtual scrolling */
-#top-spacer, #bottom-spacer {
+#spacer {
     width: 100%;
-    /* Height will be set by JavaScript */
+}
+
+#thumbnailsContainer {
+    position: absolute;
+    width: 100%;
+    top: 0; 
+    left: 0; 
+    right: 0;
 }
