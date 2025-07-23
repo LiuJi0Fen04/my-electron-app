@@ -67,3 +67,79 @@
 
 
 2. intersection observer
+
+
+
+
+3. about reflow
+    [Violation] Forced reflow while executing JavaScript took 99ms
+    comes from Chrome DevTools (or Chromium-based browsers like Edge). It’s a performance warning — not an error — and it tells you that your JavaScript code triggered a layout recalculation (also called "reflow") that blocked the browser's main thread for too long.
+
+    🔍 What is a "forced reflow"?
+    When you:
+
+    Read layout-related properties (like .offsetHeight, .scrollTop, .getBoundingClientRect())
+
+    Then immediately change styles or DOM elements afterward
+
+    …the browser may force a reflow to recalculate layout before continuing, which can block rendering and slow things down.
+
+    🔁 Common layout triggers:
+    Accessing any of these can cause layout reflows:
+
+    js
+    Copy
+    Edit
+    element.offsetTop
+    element.offsetHeight
+    element.getBoundingClientRect()
+    element.scrollTop
+    element.clientHeight
+    These read from the DOM, and if you've changed styles or structure right before reading them, the browser is forced to:
+
+    Apply all pending changes
+
+    Recalculate the layout
+
+    Return the accurate value
+    Which costs performance, especially with many DOM nodes.
+
+    ⏱ Why “99ms” matters
+    Anything over 50ms is considered long.
+
+    Blocking the main thread for 99ms causes jank or lag, especially in scroll or animation events.
+
+    This means your scroll listener or DOM manipulation may be doing too much work.
+
+    🛠 How to reduce or avoid this
+    Debounce or throttle your scroll or resize handlers.
+
+    js
+    Copy
+    Edit
+    // simple throttle example
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+    if (!ticking) {
+        window.requestAnimationFrame(() => {
+        renderVisibleThumbnails();
+        ticking = false;
+        });
+        ticking = true;
+    }
+    });
+    Batch reads and writes:
+
+    js
+    Copy
+    Edit
+    // BAD: mixed read and write
+    const height = el.offsetHeight;
+    el.style.height = height + 'px';
+
+    // GOOD: batch reads first, then writes
+    const height = el.offsetHeight;
+    requestAnimationFrame(() => {
+    el.style.height = height + 'px';
+    });
+    Avoid complex layouts or heavy DOM operations inside tight loops (like scroll events).

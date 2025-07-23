@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const minBottomHeight = getCssProperty(rightBottomPanel, 'min-height');
     const resizerHeight = getCssProperty(rightTopBottomResizer, 'height'); // Assuming vertical resizer has same height
 
+    // --- 1. resizer ---  ---------------------------------------------------------------------------------------
     leftMiddleResizer.addEventListener('mousedown', (e) => startResizing(e, leftMiddleResizer));
     middleRightResizer.addEventListener('mousedown', (e) => startResizing(e, middleRightResizer));
     rightTopBottomResizer.addEventListener('mousedown', (e) => startResizing(e, rightTopBottomResizer));
@@ -95,6 +96,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function stopResizing() {
+        if (!isResizing) {
+            return;
+        }
         isResizing = false;
         if (activeResizer) {
             activeResizer.classList.remove('active');
@@ -105,13 +109,13 @@ document.addEventListener('DOMContentLoaded', () => {
         resizeImageCanvas(true);
     }
 
-    // --- Image Viewer Canvas ---
+    // --- 2. Image Viewer Canvas ---  ---------------------------------------------------------------------------------------
     const imageCanvas = document.getElementById('imageCanvas');
     const imageCtx = imageCanvas.getContext('2d');
     const openFolderBtn = document.getElementById('open-folder-btn');
     const thumbnailGallery = document.getElementById('thumbnailGallery');
 
-    // show image -------------------------------------------------------------------------------------------------------------------
+    // show image 
     let currentImage = new Image();
     let imageFiles = [];
     let folderPath = '';
@@ -236,6 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 else{
                     img.src = filePath;
                     img.alt = `Thumbnail ${i + 1}`;
+                    img.title = file;
                     thumbDiv.appendChild(img);                    
                 }
 
@@ -313,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const deltaY = Math.abs(currentScrollTop - lastScrollTop);
                         const deltaTime = now - lastTimestamp;
                         const scrollSpeed = deltaY / deltaTime; // px per ms
-                        // console.log('scrollSpeed, deltaTime: ', scrollSpeed, deltaTime);
+                        console.log('scrollSpeed, deltaTime: ', scrollSpeed, deltaTime);
                         if(scrollSpeed < 0.4){
                             if (!scrollTimeout){
                                 scrollTimeout = setTimeout(() => {
@@ -334,18 +339,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         clearTimeout(scrollStopTimer);
                         scrollStopTimer = setTimeout(() => {
                             if(speedExcedRecord == 1){
-                                // console.log('high speed stop and loading image');
+                                console.log('high speed stop and loading image');
                                 renderVisibleThumbnails();                        
                             }
-                        }, 50);
-
-                        // if(speedExcedRecord == 1){
-                        //     clearTimeout(scrollStopTimer);
-                        //     scrollStopTimer = setTimeout(() => {
-                        //         console.log('high speed stop and loading image');
-                        //         renderVisibleThumbnails();
-                        //     }, 50);
-                        // }
+                        }, 20);
                     });    
                     
                     // Calculate thumbnail width and scrollbar width
@@ -572,5 +569,147 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // # 3. image canvas event -------------------------------------------------------------------------------------------------------------------------------
+
+    let activeTool = 'default'; // 'default', 'rectangle', 'circle', 'pan'
+    let isPanningImage = false;
+
+    imageCanvas.addEventListener('mousedown', handleImageCanvasMouseDown);
+    imageCanvas.addEventListener('mousemove', handleImageCanvasMouseMove);
+    imageCanvas.addEventListener('mouseup', handleImageCanvasMouseUp);
+    imageCanvas.addEventListener('mouseleave', handleImageCanvasMouseLeave);
+    imageCanvas.addEventListener('wheel', handleImageCanvasWheel);
+
+    function setActiveTool(tool) {
+        // document.querySelectorAll('.tool-area').forEach(btn => btn.classList.remove('active'));
+        // const toolBtn = document.getElementById(`${tool}-tool`);
+        // if (toolBtn) {
+        //     toolBtn.classList.add('active');
+        // }
+        activeTool = tool;
+        imageCanvas.style.cursor = (tool === 'pan') ? 'grab' : 'crosshair';
+        if (tool === 'default') {
+            imageCanvas.style.cursor = 'default';
+        }
+    }
+
+    function getCanvasCoords(e) {
+        const rect = imageCanvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        return { x, y };
+    }
+
+    function getImageCoords(canvasX, canvasY) {
+        const x = (canvasX - imagePan.x) / imageZoom;
+        const y = (canvasY - imagePan.y) / imageZoom;
+        return { x, y };
+    }
+
+    function handleImageCanvasWheel(e) {
+        e.preventDefault(); // Prevent page scrolling
+
+        const zoomFactor = 1.1;
+        const mouseX = e.clientX - imageCanvas.getBoundingClientRect().left;
+        const mouseY = e.clientY - imageCanvas.getBoundingClientRect().top;
+
+        // Calculate image coordinates under the mouse before zoom
+        const imgX = (mouseX - imagePan.x) / imageZoom;
+        const imgY = (mouseY - imagePan.y) / imageZoom;
+
+        if (e.deltaY < 0) { // Zoom in
+            imageZoom *= zoomFactor;
+        } else { // Zoom out
+            imageZoom /= zoomFactor;
+        }
+
+        // Keep zoom within reasonable bounds
+        imageZoom = Math.max(0.1, Math.min(10.0, imageZoom));
+
+        // Recalculate pan to keep the point under the mouse fixed
+        imagePan.x = mouseX - imgX * imageZoom;
+        imagePan.y = mouseY - imgY * imageZoom;
+
+        drawImage();
+    }
+
+    function handleImageCanvasMouseDown(e) {
+        const { x, y } = getCanvasCoords(e);
+        const imageCoords = getImageCoords(x, y);
+
+        if (activeTool === 'pan' || activeTool === 'default') {
+            isPanningImage = true;
+            imageCanvas.style.cursor = 'grabbing';
+            lastMousePos = { x, y };
+        } else if (activeTool === 'rectangle' || activeTool === 'circle') {
+            drawingShape = {
+                type: activeTool,
+                startX: imageCoords.x,
+                startY: imageCoords.y,
+                currentX: imageCoords.x,
+                currentY: imageCoords.y
+            };
+        }
+    }
+
+    /**
+     * when mouse up in imageCanvas area sets the curse as default
+     * @param mouse_event e 
+     */
+    function handleImageCanvasMouseUp(e) {
+        isPanningImage = false;
+        imageCanvas.style.cursor = (activeTool === 'pan') ? 'grab' : 'crosshair';
+        if (activeTool === 'default') {
+            imageCanvas.style.cursor = 'default';
+        }
+
+        if (drawingShape) {
+            // Normalize shape coordinates (e.g., ensure startX < endX)
+            const finalShape = { ...drawingShape };
+            if (finalShape.type === 'rectangle') {
+                finalShape.endX = finalShape.currentX;
+                finalShape.endY = finalShape.currentY;
+            }
+            // For circle, currentX/Y are relative to center, so just store as is
+            drawnShapes.push(finalShape);
+            drawingShape = null;
+            drawImage();
+        }
+    }
+
+    function handleImageCanvasMouseLeave() {
+        isPanningImage = false;
+        drawingShape = null; // Cancel drawing if mouse leaves canvas
+        imageCanvas.style.cursor = (activeTool === 'pan') ? 'grab' : 'crosshair';
+        if (activeTool === 'default') {
+            imageCanvas.style.cursor = 'default';
+        }
+        drawImage(); // Redraw to clear any partial drawing
+    }
+
+    function handleImageCanvasMouseMove(e) {
+        const { x, y } = getCanvasCoords(e);
+        const imageCoords = getImageCoords(x, y);
+
+        if (isPanningImage) {
+            imagePan.x += x - lastMousePos.x;
+            imagePan.y += y - lastMousePos.y;
+            lastMousePos = { x, y };
+            drawImage();
+        } else if (drawingShape) {
+            drawingShape.currentX = imageCoords.x;
+            drawingShape.currentY = imageCoords.y;
+            drawImage();
+        }
+    }
+
+    // --- Procedure Editor Canvas --- -----------------------------------------------------------------------------
+    const procedureCanvas = document.getElementById('procedureCanvas');
+    const procedureCtx = procedureCanvas.getContext('2d');
+
+
+
+    // Set initial active tool for image viewer
+    setActiveTool('default');
     // This is the end of the code 
 });

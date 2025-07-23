@@ -12,37 +12,31 @@
             <h2>Tools</h2>
             <div class="tool-area" id="rectangle-tool">
                 <h3>Add Rectangle</h3>
+                <p>Click and drag on the image to draw a rectangle.</p>
             </div>
             <div class="tool-area" id="circle-tool">
                 <h3>Add Circle</h3>
+                <p>Click and drag on the image to draw a circle (from center).</p>
             </div>
             <div class="tool-area" id="pan-tool">
                 <h3>Pan Image</h3>
+                <p>Default mode. Drag to move image.</p>
             </div>
             <div class="tool-area active" id="default-tool">
                 <h3>Select/Zoom/Pan</h3>
+                <p>Default mode for image interaction.</p>
             </div>
+            <button id="clear-shapes-btn">Clear All Shapes</button>
 
+            <button id="send-message-btn">Send Message to Main</button>
+            <p id="main-message-display"></p>
         </div>
 
         <div class="horizontal-resizer" id="left-middle-resizer"></div>
 
         <div class="middle-panel">
-            <h2>Procedure Editor</h2>
-            <div class="middle-content-wrapper">
-                <div class="procedure-canvas-container">
-                    <canvas id="procedureCanvas"></canvas>
-                    <div class="overview-window-wrapper">
-                        <button id="toggle-overview-btn" class="overview-toggle-btn">
-                            &#9650;
-                        </button>
-                        <div class="overview-window hidden">
-                            <h3>Overview</h3>
-                            <canvas id="overviewCanvas"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <h2>Middle Panel</h2>
+            <p>This panel will span the full height.</p>
         </div>
 
         <div class="horizontal-resizer" id="middle-right-resizer"></div>
@@ -50,27 +44,20 @@
         <div class="right-panels-container">
             <div class="right-top-panel">
                 <div class="canvas-header">
+                    <h2>Image Viewer</h2>
                     <button id="open-folder-btn">Open Image Folder</button>
                 </div>
                 <div class="canvas-container">
                     <canvas id="imageCanvas"></canvas>
-                    <div class="thumbnail-gallery" id="thumbnailGallery">
-                        <!-- <div id="spacer"></div> 
-                        <div id="thumbnailsContainer"></div> -->
-                    </div>                       
                 </div>
             </div>
             <div class="vertical-resizer" id="right-top-bottom-resizer"></div>
             <div class="right-bottom-panel">
                 <h2>Thumbnail Gallery</h2>
-
+                <div class="thumbnail-gallery" id="thumbnailGallery">
+                    </div>
             </div>
         </div>
-    </div>
-
-    <div id="node-context-menu" class="context-menu hidden">
-        <div class="context-menu-item" id="context-delete-node">Delete Node</div>
-        <div class="context-menu-item" id="context-copy-node">Copy Node</div>
     </div>
 
     <script src="renderer.js"></script>

@@ -70,22 +70,6 @@ html, body {
     flex-shrink: 0; /* Prevent the resizer from shrinking */
 }
 
-/* Middle Panel Styles */
-.middle-panel {
-    flex-grow: 1; /* This panel will take up all available space */
-    min-width: 300px; /* Minimum width for the middle panel */
-    background-color: #21252b;
-    padding: 15px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-}
-
-.middle-panel h2 {
-    color: #c678dd;
-    margin-top: 0;
-    margin-bottom: 15px;
-}
 
 /* Right Panels Container */
 .right-panels-container {
@@ -109,7 +93,7 @@ html, body {
     height: 70%;
     min-height: 50%;
     background-color: #21252b;
-    padding: 15px;
+    padding: 5px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -119,7 +103,7 @@ html, body {
     flex-grow: 1; /* This will grow to fill space */
     min-height: 100px;
     background-color: #21252b;
-    padding: 15px;
+    padding: 5px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -279,4 +263,111 @@ html, body {
 #top-spacer, #bottom-spacer {
     width: 100%;
     /* Height will be set by JavaScript */
+}
+
+/* design for the middle panel*/
+
+/* Middle Panel Styles ------------------------------------------------------------------------------*/
+.middle-panel {
+    flex-grow: 1; /* This panel will take up all available space */
+    min-width: 300px; /* Minimum width for the middle panel */
+    background-color: #21252b;
+    padding: 5px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.middle-panel h2 {
+    color: #c678dd;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+
+.middle-content-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+}
+
+.procedure-canvas-container {
+    flex-grow: 1;
+    background-color: #31363f;
+    border-radius: 0px;
+    border: 1px solid #5c6370;
+    position: relative;
+    overflow: hidden;
+}
+
+#procedureCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+}
+
+/* Overview Window Styles (No change) */
+.overview-window-wrapper {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    z-index: 10;
+}
+
+.overview-toggle-btn {
+    background-color: #5c6370;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 1.2em;
+    line-height: 1;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    margin-bottom: 5px;
+}
+
+.overview-toggle-btn:hover {
+    background-color: #61afef;
+}
+
+.overview-toggle-btn.unfolded {
+    transform: rotate(180deg);
+}
+
+.overview-window {
+    background-color: #21252b;
+    border: 1px solid #61afef;
+    border-radius: 4px;
+    padding: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 150px;
+    height: 150px;
+}
+
+.overview-window.hidden {
+    display: none;
+}
+
+.overview-window h3 {
+    color: #e6c07b;
+    margin-top: 0;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+#overviewCanvas {
+    background-color: #31363f;
+    border: 1px solid #5c6370;
+    width: 100%;
+    height: 100%;
+    display: block;
 }
