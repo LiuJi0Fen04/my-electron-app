@@ -706,6 +706,129 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Procedure Editor Canvas --- -----------------------------------------------------------------------------
     const procedureCanvas = document.getElementById('procedureCanvas');
     const procedureCtx = procedureCanvas.getContext('2d');
+    const overviewCanvas = document.getElementById('overviewCanvas');
+    const overviewCtx = overviewCanvas.getContext('2d');
+    const toggleOverviewBtn = document.getElementById('toggle-overview-btn');
+    const overviewWindow = document.querySelector('.overview-window');
+
+    let procedurePan = { x: 0, y: 0 };
+    let procedureZoom = 1.0;
+    let over_rect = overviewCanvas.getBoundingClientRect();
+    console.log('overview height: ', over_rect.height);
+    // Toggle overview window
+    toggleOverviewBtn.addEventListener('click', () => {
+
+        overviewWindow.classList.toggle('hidden');
+        toggleOverviewBtn.textContent = overviewWindow.classList.contains('hidden') ? '▲' : '▼';
+
+        // Redraw overview if it becomes visible
+        if (!overviewWindow.classList.contains('hidden')) {
+            over_rect = overviewCanvas.getBoundingClientRect();
+            console.log('show overview height: ', over_rect.height);    
+            resizeProcedureCanvas(); // This will redraw overview
+        }
+        else{
+            over_rect = overviewCanvas.getBoundingClientRect();
+            console.log('hidden overview height: ', over_rect.height);            
+        }
+    });
+
+    function resizeProcedureCanvas(initial = false) {
+        const container = procedureCanvas.parentElement;
+        procedureCanvas.width = container.clientWidth;
+        // procedureCanvas.height = container.clientHeight;   // 会导致overview在拖拽的时候超出最低界限，高度变高，实际上应该是procedureCanvas的parent无定义？
+        console.log('container.clientHeight: ', procedureCanvas.height);
+        overviewCanvas.width = overviewWindow.clientWidth;
+        overviewCanvas.height = overviewWindow.clientHeight;
+        drawProcedureCanvas();
+        drawOverviewCanvas();
+    }
+
+    function drawProcedureCanvas() {
+        procedureCtx.clearRect(0, 0, procedureCanvas.width, procedureCanvas.height);
+        procedureCtx.save();
+        procedureCtx.translate(procedurePan.x, procedurePan.y);
+        procedureCtx.scale(procedureZoom, procedureZoom);
+
+        // // Draw connections first
+        // procedureNodes.forEach(node => {
+        //     // For simplicity, draw connections from this node to others
+        //     // In a real app, you'd have a specific connections array
+        //     node.connections = node.connections || []; // Ensure connections array exists
+        //     node.connections.forEach(targetNodeId => {
+        //         const targetNode = procedureNodes.find(n => n.id === targetNodeId);
+        //         if (targetNode) {
+        //             drawConnection(node, targetNode);
+        //         }
+        //     });
+        // });
+        // // Draw nodes
+        // procedureNodes.forEach(node => drawNode(node));
+
+        procedureCtx.restore();
+    }
+
+    function drawOverviewCanvas() {
+        overviewCtx.clearRect(0, 0, overviewCanvas.width, overviewCanvas.height);
+        // if (procedureNodes.length === 0) return;
+
+        // Calculate bounding box of all nodes
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        // procedureNodes.forEach(node => {
+        //     minX = Math.min(minX, node.x);
+        //     minY = Math.min(minY, node.y);
+        //     maxX = Math.max(maxX, node.x + 100); // Assuming node width 100
+        //     maxY = Math.max(maxY, node.y + 50);  // Assuming node height 50
+        // });
+
+        const contentWidth = maxX - minX;
+        const contentHeight = maxY - minY;
+
+        const overviewPadding = 10;
+        const scaleX = (overviewCanvas.width - overviewPadding * 2) / contentWidth;
+        const scaleY = (overviewCanvas.height - overviewPadding * 2) / contentHeight;
+        const overviewScale = Math.min(scaleX, scaleY);
+
+        overviewCtx.save();
+        overviewCtx.translate(overviewPadding, overviewPadding);
+        overviewCtx.scale(overviewScale, overviewScale);
+        overviewCtx.translate(-minX, -minY); // Translate to origin of content
+
+        // // Draw nodes on overview
+        // overviewCtx.fillStyle = '#4b5263';
+        // overviewCtx.strokeStyle = '#5c6370';
+        // procedureNodes.forEach(node => {
+        //     overviewCtx.fillRect(node.x, node.y, 100, 50);
+        //     overviewCtx.strokeRect(node.x, node.y, 100, 50);
+        // });
+
+        // // Draw connections on overview (simplified)
+        // overviewCtx.strokeStyle = '#abb2bf';
+        // procedureNodes.forEach(node => {
+        //     node.connections = node.connections || [];
+        //     node.connections.forEach(targetNodeId => {
+        //         const targetNode = procedureNodes.find(n => n.id === targetNodeId);
+        //         if (targetNode) {
+        //             overviewCtx.beginPath();
+        //             overviewCtx.moveTo(node.x + 50, node.y + 25);
+        //             overviewCtx.lineTo(targetNode.x + 50, targetNode.y + 25);
+        //             overviewCtx.stroke();
+        //         }
+        //     });
+        // });
+
+        // Draw current viewport rectangle on overview
+        overviewCtx.strokeStyle = '#e6c07b';
+        overviewCtx.lineWidth = 3 / overviewScale; // Scale line width back
+        overviewCtx.strokeRect(
+            (-procedurePan.x / procedureZoom),
+            (-procedurePan.y / procedureZoom),
+            (procedureCanvas.width / procedureZoom),
+            (procedureCanvas.height / procedureZoom)
+        );
+
+        overviewCtx.restore();
+    }
 
 
 
@@ -713,3 +836,4 @@ document.addEventListener('DOMContentLoaded', () => {
     setActiveTool('default');
     // This is the end of the code 
 });
+
