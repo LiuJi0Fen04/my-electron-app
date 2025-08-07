@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Toolbox UI</title>
+    <!-- Link to the CSS file for styling -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="main-container">
+        <!-- Left Panel: Narrow panel for tools -->
+        <div class="left-panel">
+            <h2>Tools</h2>
+            
+            <!-- Pre-process Tool Section -->
+            <div class="tool" id="preprocess-tool">
+                <h3>Pre-process</h3>
+                <!-- Container for sub-tools, now hidden and used as a template -->
+                <div class="sub-tools-container" id="preprocess-subtools">
+                    <!-- Each sub-tool is draggable -->
+                    <div class="sub-tool" draggable="true" data-tool="sharpness">Sharpness</div>
+                    <div class="sub-tool" draggable="true" data-tool="blur">Blur</div>
+                    <div class="sub-tool" draggable="true" data-tool="threshold">Threshold</div>
+                </div>
+            </div>
+            
+            <!-- Detection Tool Section -->
+            <div class="tool" id="detection-tool">
+                <h3>Detection</h3>
+                <!-- Container for sub-tools, now hidden and used as a template -->
+                <div class="sub-tools-container" id="detection-subtools">
+                    <!-- Each sub-tool is draggable -->
+                    <div class="sub-tool" draggable="true" data-tool="line-detection">Line Detection</div>
+                    <div class="sub-tool" draggable="true" data-tool="circle-detection">Circle Detection</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Panel: Main workspace where sub-tools can be dropped -->
+        <div class="right-panel" id="workspace">
+            <h2>Workspace</h2>
+            <p>Drag tools here</p>
+        </div>
+    </div>
+
+    <!-- Link to the JavaScript file for interactivity -->
+    <script src="renderer.js"></script>
+</body>
+</html>

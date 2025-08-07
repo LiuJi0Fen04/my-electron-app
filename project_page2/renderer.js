@@ -63,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
             newLeftWidth = Math.min(newLeftWidth, maxLeftWidth);
 
             leftPanel.style.width = `${newLeftWidth}px`;
+            resizeProcedureCanvas();
 
         } else if (activeResizer === middleRightResizer) {
             // Calculate new width for right panels container
@@ -77,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
             newRightWidth = Math.min(newRightWidth, maxRightWidth);
 
             rightPanelsContainer.style.width = `${newRightWidth}px`;
+            resizeProcedureCanvas();
 
         } else if (activeResizer === rightTopBottomResizer) {
             const rightPanelsContainerRect = rightPanelsContainer.getBoundingClientRect();
@@ -713,8 +715,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let procedurePan = { x: 0, y: 0 };
     let procedureZoom = 1.0;
+    const PROCEDURE_CANVAS_ZOOM_FACTOR = 0.1;
+
     let over_rect = overviewCanvas.getBoundingClientRect();
-    console.log('overview height: ', over_rect.height);
+
+    let isDraggingNode = false; // For dragging existing nodes on canvas
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+    let selectedNode = null; // Currently selected node for dragging/context menu
+
+    let isPanningProcedureCanvas = false; // For panning the canvas itself
+    let lastPanMouseX = 0;
+    let lastPanMouseY = 0;
+
+
+
+
     // Toggle overview window
     toggleOverviewBtn.addEventListener('click', () => {
 
@@ -736,7 +752,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function resizeProcedureCanvas(initial = false) {
         const container = procedureCanvas.parentElement;
         procedureCanvas.width = container.clientWidth;
-        // procedureCanvas.height = container.clientHeight;   // 会导致overview在拖拽的时候超出最低界限，高度变高，实际上应该是procedureCanvas的parent无定义？
+        procedureCanvas.height = container.clientHeight;   // 会导致overview在拖拽的时候超出最低界限，高度变高，实际上应该是procedureCanvas的parent无定义？
         console.log('container.clientHeight: ', procedureCanvas.height);
         overviewCanvas.width = overviewWindow.clientWidth;
         overviewCanvas.height = overviewWindow.clientHeight;
@@ -749,7 +765,8 @@ document.addEventListener('DOMContentLoaded', () => {
         procedureCtx.save();
         procedureCtx.translate(procedurePan.x, procedurePan.y);
         procedureCtx.scale(procedureZoom, procedureZoom);
-
+        drawGrid(procedureCtx, procedureCanvas.width, procedureCanvas.height, procedureZoom, procedurePan.x, procedurePan.y);
+        // console.log('draw grid param: ', procedureCanvas.width, procedureCanvas.height, procedureZoom, procedurePan.x, procedurePan.y)
         // // Draw connections first
         // procedureNodes.forEach(node => {
         //     // For simplicity, draw connections from this node to others
@@ -766,6 +783,116 @@ document.addEventListener('DOMContentLoaded', () => {
         // procedureNodes.forEach(node => drawNode(node));
 
         procedureCtx.restore();
+    }
+
+    function drawGrid(ctx, canvasWidth, canvasHeight, zoom, panX, panY, gridSize = 20) {
+        ctx.strokeStyle = '#4b5263';
+        ctx.lineWidth = 0.5;
+        console.log('grid zoom: ', zoom);
+        const scaledGridSize = gridSize;
+        const start_x = panX / zoom - (panX / zoom) % scaledGridSize
+        const start_y = panY / zoom - (panY / zoom) % scaledGridSize
+        console.log('gird x shift num, gird y shift num: ', start_x / zoom, start_y / zoom);
+        console.log('(panX / zoom) % scaledGridSize: ', (panX / zoom) % scaledGridSize);
+        for (let x = -start_x; x < (canvasWidth - panX) / zoom; x += scaledGridSize) {
+            ctx.beginPath();
+            ctx.moveTo(x, - panY / zoom);
+            ctx.lineTo(x, (canvasHeight - panY) / zoom);
+            ctx.stroke();
+        }
+        for (let y = -start_y; y < (canvasHeight - panY) / zoom; y += scaledGridSize) {
+            ctx.beginPath();
+            ctx.moveTo(-panX / zoom, y);
+            ctx.lineTo((canvasWidth - panX) / zoom, y);
+            ctx.stroke();
+        }
+    }
+
+    // --- utility functions for procedure canvas corrdinates ---
+    function getProcedureMousePos(canvas, evt) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+            x: evt.clientX - rect.left,
+            y: evt.clientY - rect.top
+        };
+    }
+
+    function procedureCanvasToWorldCoords(canvasX, canvasY) {
+        const worldX = (canvasX - procedurePan.x) / procedureZoom;
+        const worldY = (canvasY - procedurePan.y) / procedureZoom;
+        return { x: worldX, y: worldY };
+    }
+    // --- FINISH: utility functions for procedure canvas corrdinates ---
+    function handleProcedureCanvasWheel(e) {
+        e.preventDefault();
+
+        const mousePos = getProcedureMousePos(procedureCanvas, e);
+        const worldMousePosBeforeZoom = procedureCanvasToWorldCoords(mousePos.x, mousePos.y);
+
+        const scale = Math.exp(-e.deltaY * 0.001 * PROCEDURE_CANVAS_ZOOM_FACTOR);
+        const oldZoom = procedureZoom;
+        procedureZoom = Math.min(Math.max(0.5, procedureZoom * scale), 4);
+
+        procedurePan.x = mousePos.x - (worldMousePosBeforeZoom.x * procedureZoom);
+        procedurePan.y = mousePos.y - (worldMousePosBeforeZoom.y * procedureZoom);
+        drawProcedureCanvas();
+        drawOverviewCanvas();
+    }
+
+    function handleProcedureCanvasMouseDown(e) {
+        // nodeContextMenu.classList.add('hidden');
+
+        const mousePos = getProcedureMousePos(procedureCanvas, e);
+        const worldMousePos = procedureCanvasToWorldCoords(mousePos.x, mousePos.y);
+
+        // selectedNode = procedureNodes.find(node =>
+        //     worldMousePos.x >= node.x && worldMousePos.x <= node.x + node.width &&
+        //     worldMousePos.y >= node.y && worldMousePos.y <= node.y + node.height
+        // );
+
+        if (selectedNode) {
+            isDraggingNode = true;
+            dragOffsetX = worldMousePos.x - selectedNode.x;
+            dragOffsetY = worldMousePos.y - selectedNode.y;
+            procedureCanvas.style.cursor = 'grabbing';
+        } else {
+            isPanningProcedureCanvas = true;
+            lastPanMouseX = e.clientX;
+            lastPanMouseY = e.clientY;
+            procedureCanvas.style.cursor = 'grabbing';
+        }
+        drawProcedureCanvas();
+    }
+
+    function handleProcedureCanvasMouseMove(e) {
+        const mousePos = getProcedureMousePos(procedureCanvas, e);
+        const worldMousePos = procedureCanvasToWorldCoords(mousePos.x, mousePos.y);
+
+        if (isDraggingNode && selectedNode) {
+            selectedNode.x = worldMousePos.x - dragOffsetX;
+            selectedNode.y = worldMousePos.y - dragOffsetY;
+            drawProcedureCanvas();
+            drawOverviewCanvas();
+        } 
+        else if (isPanningProcedureCanvas && e.buttons === 1) {
+            const deltaX = e.clientX - lastPanMouseX;
+            const deltaY = e.clientY - lastPanMouseY;
+            procedurePan.x += deltaX;
+            procedurePan.y += deltaY;
+            lastPanMouseX = e.clientX;
+            lastPanMouseY = e.clientY;
+            // procedurePan.x = Math.min(Math.max(procedurePan.x, -500 * procedureZoom), 500 * procedureZoom);
+            // procedurePan.y = Math.min(Math.max(procedurePan.y, -500 * procedureZoom), 500 * procedureZoom);
+            drawProcedureCanvas();
+            drawOverviewCanvas();
+        }
+    }
+
+    function handleProcedureCanvasMouseUp() {
+        isDraggingNode = false;
+        isPanningProcedureCanvas = false;
+        procedureCanvas.style.cursor = 'grab';
+        // drawProcedureCanvas();
     }
 
     function drawOverviewCanvas() {
@@ -832,8 +959,121 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+    // --- logic for display tools on hover in the middle panel --- -----------------------------------------------------------------------------
+    const tools = document.querySelectorAll('.tool');
+    let hideTimeout = null; // To manage delayed hiding of the popup
+    let activePopup = null; // To keep track of the currently displayed popup
+
+
+    tools.forEach(tool => {
+        // When mouse enters a main tool
+        tool.addEventListener('mouseenter', (event) => {
+            // Clear any pending hide timeouts to prevent immediate disappearance
+            if (hideTimeout) {
+                clearTimeout(hideTimeout);
+                hideTimeout = null;
+            }
+
+            // If there's an active popup from a *different* tool, remove it
+            if (activePopup && activePopup.parentElement) {
+                activePopup.remove();
+                activePopup = null;
+            }
+
+            const subToolsContainer = tool.querySelector('.sub-tools-container');
+            if (subToolsContainer) {
+                const popup = document.createElement('div');
+                popup.classList.add('sub-tool-popup');
+
+                // Clone each sub-tool from the hidden template and append to the popup
+                Array.from(subToolsContainer.children).forEach(subTool => {
+                    const clonedSubTool = subTool.cloneNode(true); // Deep clone the element
+
+                    // IMPORTANT: Re-attach drag listeners to the cloned elements
+                    clonedSubTool.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', e.target.textContent);
+                        e.dataTransfer.effectAllowed = 'copy';
+                        e.target.classList.add('dragging');
+                    });
+                    clonedSubTool.addEventListener('dragend', (e) => {
+                        e.target.classList.remove('dragging');
+                    });
+                    popup.appendChild(clonedSubTool);
+                });
+
+                // Calculate vertical position of the popup relative to the workspace
+                const toolRect = tool.getBoundingClientRect(); // Position of the hovered tool
+                const workspaceRect = middlePanel.getBoundingClientRect(); // Position of the workspace
+
+                // Align the top of the popup with the top of the hovered tool
+                // Adjust for workspace's own top offset
+                let topPosition = toolRect.top - workspaceRect.top;
+
+                // Optional: Add a small vertical offset for visual spacing
+                topPosition += 10;
+
+                // Apply the calculated position to the popup
+                popup.style.top = `${topPosition}px`;
+                popup.style.left = '130px'; // Fixed left offset from the workspace's left edge
+
+                middlePanel.appendChild(popup); // Add the popup to the workspace
+                activePopup = popup; // Set this as the currently active popup
+
+                // Add mouseleave listener to the popup itself
+                // This allows the user to move the mouse onto the popup without it disappearing
+                popup.addEventListener('mouseleave', () => {
+                    hideTimeout = setTimeout(() => {
+                        if (activePopup && activePopup.parentElement) {
+                            activePopup.remove();
+                            activePopup = null;
+                        }
+                    }, 100); // Small delay before hiding
+                });
+                // If mouse re-enters the popup, clear the hide timeout
+                popup.addEventListener('mouseenter', () => {
+                    if (hideTimeout) {
+                        clearTimeout(hideTimeout);
+                        hideTimeout = null;
+                    }
+                });
+            }
+        });
+
+        // When mouse leaves a main tool
+        tool.addEventListener('mouseleave', () => {
+            // Set a timeout to hide the popup. This delay is crucial
+            // to allow the user to move their cursor from the tool
+            // to the sub-tool popup without the popup disappearing.
+            hideTimeout = setTimeout(() => {
+                // Only hide if the mouse hasn't re-entered the popup
+                if (activePopup && activePopup.parentElement) {
+                    activePopup.remove();
+                    activePopup = null;
+                }
+            }, 100); // Small delay (e.g., 100 milliseconds)
+        });
+    });
+
+
+
+    // --- Initial Setup ---
+    window.addEventListener('resize', () => {
+        resizeImageCanvas();
+        resizeProcedureCanvas();
+    });
     // Set initial active tool for image viewer
     setActiveTool('default');
+    // initial procedure canvas draw
+    resizeProcedureCanvas();
+
+    // Attach all procedure canvas interaction listeners
+    procedureCanvas.addEventListener('wheel', handleProcedureCanvasWheel);
+    procedureCanvas.addEventListener('mousedown', handleProcedureCanvasMouseDown);
+    procedureCanvas.addEventListener('mousemove', handleProcedureCanvasMouseMove);
+    procedureCanvas.addEventListener('mouseup', handleProcedureCanvasMouseUp);
+
+
+
     // This is the end of the code 
 });
 

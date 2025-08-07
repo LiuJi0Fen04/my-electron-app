@@ -9,20 +9,39 @@
 <body>
     <div class="container">
         <div class="left-panel">
-            <h2>Tools</h2>
-            <div class="tool-area" id="rectangle-tool">
-                <h3>Add Rectangle</h3>
+            <h2>Tool</h2>
+            <!-- image capture -->
+            <div class="tool" id="image-caputre">
+                <h3>capture</h3>
+                <!-- Container for sub-tools, now hidden and used as a template -->
+                <div class="sub-tools-container" id="imagecapture-subtools">
+                    <!-- Each sub-tool is draggable -->
+                    <div class="sub-tool" draggable="true" data-tool="camera">Camera</div>
+                    <div class="sub-tool" draggable="true" data-tool="folder">Folder</div>
+                </div>
             </div>
-            <div class="tool-area" id="circle-tool">
-                <h3>Add Circle</h3>
+            <!-- Pre-process Tool Section -->
+            <div class="tool" id="preprocess-tool">
+                <h3>Pre</h3>
+                <!-- Container for sub-tools, now hidden and used as a template -->
+                <div class="sub-tools-container" id="preprocess-subtools">
+                    <!-- Each sub-tool is draggable -->
+                    <div class="sub-tool" draggable="true" data-tool="sharpness">Sharpness</div>
+                    <div class="sub-tool" draggable="true" data-tool="blur">Blur</div>
+                    <div class="sub-tool" draggable="true" data-tool="threshold">Threshold</div>
+                </div>
             </div>
-            <div class="tool-area" id="pan-tool">
-                <h3>Pan Image</h3>
+            
+            <!-- Detection Tool Section -->
+            <div class="tool" id="detection-tool">
+                <h3>Detection</h3>
+                <!-- Container for sub-tools, now hidden and used as a template -->
+                <div class="sub-tools-container" id="detection-subtools">
+                    <!-- Each sub-tool is draggable -->
+                    <div class="sub-tool" draggable="true" data-tool="line-detection">Line Detection</div>
+                    <div class="sub-tool" draggable="true" data-tool="circle-detection">Circle Detection</div>
+                </div>
             </div>
-            <div class="tool-area active" id="default-tool">
-                <h3>Select/Zoom/Pan</h3>
-            </div>
-
         </div>
 
         <div class="horizontal-resizer" id="left-middle-resizer"></div>

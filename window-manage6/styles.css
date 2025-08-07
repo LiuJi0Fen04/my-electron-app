@@ -1,0 +1,159 @@
+/* Basic reset and body styling */
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif; /* Using Inter font for a modern look */
+    display: flex;
+    height: 100vh; /* Full viewport height */
+    overflow: hidden; /* Prevent body scrollbars */
+    background-color: #f5f7fa; /* Light background */
+}
+
+/* Main container for the split layout */
+.main-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+/* Left Panel Styling */
+.left-panel {
+    width: 220px; /* Narrow width, fixed */
+    background-color: #ffffff;
+    padding: 15px;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.08); /* Subtle shadow */
+    overflow: hidden; /* No scrollbars for the left panel */
+    border-right: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Space between tools */
+    position: relative; /* Establish stacking context for potential future use, though not strictly needed for this specific popup method */
+    z-index: 1; /* Ensures it participates in stacking context */
+    height: 100%; /* Ensure it takes full height */
+    box-sizing: border-box; /* Include padding in width/height calculation */
+}
+
+.left-panel h2 {
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.3em;
+    text-align: center;
+}
+
+/* Tool Styling */
+.tool {
+    padding: 10px 15px;
+    border: 1px solid #dcdcdc;
+    background-color: #f0f4f8;
+    border-radius: 8px; /* Rounded corners */
+    cursor: pointer;
+    position: relative; /* Essential for sub-tool positioning if we were to use CSS hover */
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.tool:hover {
+    background-color: #e2e8f0;
+    border-color: #a7c0e0;
+    transform: translateY(-2px); /* Slight lift on hover */
+}
+
+.tool h3 {
+    margin: 0;
+    color: #4a5568;
+    font-size: 1.1em;
+}
+
+/* Sub-tools Container Styling (now used as a template, always hidden) */
+.sub-tools-container {
+    display: none; /* Always hidden, JavaScript will clone its children */
+    /* Removed all positioning, z-index, and hover-related styles */
+}
+
+/* New CSS for the dynamically created sub-tool popup in the right panel */
+.sub-tool-popup {
+    position: absolute; /* Positioned relative to the right-panel */
+    background-color: #ffffff;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* More prominent shadow for pop-out */
+    z-index: 999; /* Ensure it's on top of everything else */
+    min-width: 150px;
+    flex-direction: column; /* Stack sub-tools vertically */
+    gap: 8px; /* Space between sub-tools */
+    display: flex; /* Always display as flex when created by JS */
+    left: 20px; /* Fixed left offset from the right panel's left edge */
+    /* 'top' will be set dynamically by JavaScript */
+}
+
+/* Sub-tool Styling (applies to both template and cloned elements) */
+.sub-tool {
+    padding: 8px 12px;
+    background-color: #f7fafc;
+    border: 1px solid #ebf4ff;
+    border-radius: 6px; /* Rounded corners */
+    cursor: grab; /* Indicates draggable */
+    transition: background-color 0.15s ease-in-out;
+    color: #2d3748;
+    font-size: 0.95em;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.sub-tool:hover {
+    background-color: #e0e7ff;
+    border-color: #c3daff;
+}
+
+/* Right Panel Styling (Workspace) */
+.right-panel {
+    flex-grow: 1; /* Takes up remaining space */
+    background-color: #fdfdfd;
+    padding: 25px;
+    border-left: 1px solid #e0e0e0;
+    position: relative; /* Crucial for positioning the sub-tool-popup inside it */
+    overflow-y: auto; /* Allow scrolling if content in workspace overflows */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    font-size: 1.2em;
+    text-align: center;
+    z-index: 0; /* Explicitly set a lower z-index than sub-tools popup */
+}
+
+.right-panel h2 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.right-panel p {
+    color: #999;
+    font-style: italic;
+}
+
+/* Drag-and-drop feedback styles */
+.dragging {
+    opacity: 0.4; /* Make the dragged item semi-transparent */
+    border: 2px dashed #007bff;
+}
+
+.drop-highlight {
+    border: 3px dashed #007bff; /* Highlight the drop target */
+    background-color: #e6f2ff; /* Light blue background for drop target */
+}
+
+/* Style for dropped tools in the workspace */
+.dropped-tool {
+    background-color: #4CAF50; /* Green background */
+    color: white;
+    padding: 10px 15px;
+    margin: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    display: inline-block; /* Allows multiple dropped tools to flow */
+    font-weight: bold;
+    cursor: default;
+}

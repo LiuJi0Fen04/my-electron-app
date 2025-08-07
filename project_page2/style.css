@@ -15,53 +15,93 @@ html, body {
 }
 
 .left-panel {
-    width: 200px; /* Initial width, will be manipulated by JS */
-    min-width: 100px;
-    max-width: 200px;
+    /* width: 60px; 
+    min-width: 60px;
+    max-width: 100px; */
+    width: 120px; /* Initial width, will be manipulated by JS */
+    min-width: 60px;
+    max-width: 120px;
     flex-shrink: 0; /* Prevent shrinking below its width */
     background-color: #3e4451;
-    padding: 15px;
+    padding: 5px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    gap: 5px;
 }
 
 .left-panel h2 {
     color: #61afef;
-    margin-top: 0;
+    margin-top: 0px;
     margin-bottom: 15px;
 }
 
-.tool-area {
-    background-color: #4b5263;
-    border: 1px solid #5c6370;
-    border-radius: 6px;
-    padding: 10px;
-    margin-bottom: 1px;
+/* Tool Styling */
+.tool {
+    padding: 10px 15px;
+    border: 1px solid #dcdcdc;
+    background-color: #f0f4f8;
+    border-radius: 8px; /* Rounded corners */
     cursor: pointer;
-    transition: background-color 0.2s ease, border-color 0.2s ease;
+    position: relative; /* Essential for sub-tool positioning if we were to use CSS hover */
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.tool-area:hover {
-    background-color: #5c6370;
+.tool:hover {
+    background-color: #e2e8f0;
+    border-color: #a7c0e0;
+    transform: translateY(-2px); /* Slight lift on hover */
 }
 
-.tool-area.active {
-    background-color: #61afef;
-    border-color: #61afef;
-    color: #282c34;
-}
-
-.tool-area.active h3, .tool-area.active p {
-    color: #282c34;
-}
-
-.tool-area h3 {
-    color: #c678dd;
-    margin-top: 0;
-    margin-bottom: 5px;
+.tool h3 {
+    margin: 0;
+    color: #4a5568;
     font-size: 1.1em;
 }
+
+/* Sub-tools Container Styling (now used as a template, always hidden) */
+.sub-tools-container {
+    display: none; /* Always hidden, JavaScript will clone its children */
+    /* Removed all positioning, z-index, and hover-related styles */
+}
+
+/* New CSS for the dynamically created sub-tool popup in the right panel */
+.sub-tool-popup {
+    position: absolute; /* Positioned relative to the right-panel */
+    background-color: #ffffff;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* More prominent shadow for pop-out */
+    z-index: 999; /* Ensure it's on top of everything else */
+    min-width: 150px;
+    flex-direction: column; /* Stack sub-tools vertically */
+    gap: 8px; /* Space between sub-tools */
+    display: flex; /* Always display as flex when created by JS */
+    left: 20px; /* Fixed left offset from the right panel's left edge */
+    /* 'top' will be set dynamically by JavaScript */
+}
+
+/* Sub-tool Styling (applies to both template and cloned elements) */
+.sub-tool {
+    padding: 8px 12px;
+    background-color: #f7fafc;
+    border: 1px solid #ebf4ff;
+    border-radius: 6px; /* Rounded corners */
+    cursor: grab; /* Indicates draggable */
+    transition: background-color 0.15s ease-in-out;
+    color: #2d3748;
+    font-size: 0.95em;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.sub-tool:hover {
+    background-color: #e0e7ff;
+    border-color: #c3daff;
+}
+
 
 .horizontal-resizer {
     width: 2px;
@@ -184,6 +224,7 @@ html, body {
     height: 100%;  /* Make sure it fills parent container */
     width: 100%;
     overflow: hidden;
+    border-radius: 5px;
 }
 
 /* Image canvas on the left */
@@ -276,6 +317,8 @@ html, body {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    /* width: 100%;
+    height: 100%; */
 }
 
 .middle-panel h2 {
@@ -290,12 +333,14 @@ html, body {
     display: flex;
     flex-direction: row;
     gap: 15px;
+    width: 100%;
+    height: 90%; /*if the size is 95% there will be a little bit outside of the middle container未解决问题*/
 }
 
 .procedure-canvas-container {
     flex-grow: 1;
     background-color: #31363f;
-    border-radius: 0px;
+    border-radius: 5px;
     border: 1px solid #5c6370;
     position: relative;
     overflow: hidden;
