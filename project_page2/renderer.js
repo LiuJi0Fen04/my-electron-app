@@ -719,17 +719,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let over_rect = overviewCanvas.getBoundingClientRect();
 
-    let isDraggingNode = false; // For dragging existing nodes on canvas
-    let dragOffsetX = 0;
-    let dragOffsetY = 0;
-    let selectedNode = null; // Currently selected node for dragging/context menu
-
     let isPanningProcedureCanvas = false; // For panning the canvas itself
     let lastPanMouseX = 0;
     let lastPanMouseY = 0;
 
-
-
+    const tools = document.querySelectorAll('.tool');
+    const addNodeButtons = document.querySelectorAll('.add-nodes-button');
+    const clearNodeBtn = document.getElementById('clear-nodes-btn')
+    const nodeContextMenu = document.getElementById('node-context-menu');
+    const contextDeleteNodeBtn = document.getElementById('context-delete-node');
+    const contextCopyNodeBtn = document.getElementById('context-copy-node');
+    let procedureNodes = []; // Stores {id, type, text, x, y, width, height}
+    let isDraggingNode = false; // For dragging existing nodes on canvas
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+    let selectedNode = null; // Currently selected node for dragging/context menu
+    const NODE_WIDTH = 120;
+    const NODE_HEIGHT = 40;
 
     // Toggle overview window
     toggleOverviewBtn.addEventListener('click', () => {
@@ -753,12 +759,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = procedureCanvas.parentElement;
         procedureCanvas.width = container.clientWidth;
         procedureCanvas.height = container.clientHeight;   // 会导致overview在拖拽的时候超出最低界限，高度变高，实际上应该是procedureCanvas的parent无定义？
-        console.log('container.clientHeight: ', procedureCanvas.height);
+        // console.log('container.clientHeight: ', procedureCanvas.height);
         overviewCanvas.width = overviewWindow.clientWidth;
         overviewCanvas.height = overviewWindow.clientHeight;
         drawProcedureCanvas();
         drawOverviewCanvas();
     }
+
+    function drawRoundedRect(ctx, x, y, width, height, radius) {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+    }
+    
 
     function drawProcedureCanvas() {
         procedureCtx.clearRect(0, 0, procedureCanvas.width, procedureCanvas.height);
@@ -766,43 +787,66 @@ document.addEventListener('DOMContentLoaded', () => {
         procedureCtx.translate(procedurePan.x, procedurePan.y);
         procedureCtx.scale(procedureZoom, procedureZoom);
         drawGrid(procedureCtx, procedureCanvas.width, procedureCanvas.height, procedureZoom, procedurePan.x, procedurePan.y);
-        // console.log('draw grid param: ', procedureCanvas.width, procedureCanvas.height, procedureZoom, procedurePan.x, procedurePan.y)
-        // // Draw connections first
-        // procedureNodes.forEach(node => {
-        //     // For simplicity, draw connections from this node to others
-        //     // In a real app, you'd have a specific connections array
-        //     node.connections = node.connections || []; // Ensure connections array exists
-        //     node.connections.forEach(targetNodeId => {
-        //         const targetNode = procedureNodes.find(n => n.id === targetNodeId);
-        //         if (targetNode) {
-        //             drawConnection(node, targetNode);
-        //         }
-        //     });
-        // });
-        // // Draw nodes
-        // procedureNodes.forEach(node => drawNode(node));
 
+        procedureNodes.forEach(node => {
+            const { x, y } = node;
+            const width = node.width;
+            const height = node.height;
+
+            procedureCtx.fillStyle = getNodeColor(node.type);
+            procedureCtx.strokeStyle = selectedNode === node ? '#61afef' : '#5c6370';
+            procedureCtx.lineWidth = selectedNode === node ? 3 : 1;
+            drawRoundedRect(procedureCtx, x, y, width, height, 8);
+            procedureCtx.fill();
+            procedureCtx.stroke();
+            // procedureCtx.fillRect(x, y, width, height);
+            // procedureCtx.strokeRect(x, y, width, height);
+
+            procedureCtx.fillStyle = '#ffffff';
+            procedureCtx.font = `${14}px Arial`;
+            procedureCtx.textAlign = 'center';
+            procedureCtx.textBaseline = 'middle';
+            procedureCtx.fillText(node.text, x + width / 2, y + height / 2);
+        });
         procedureCtx.restore();
+    }
+
+    function getNodeColor(type) {
+        switch (type) {
+            case 'Camera': return '#98c379';
+            case 'Folder': return '#98c379';
+            case 'Sharpness': return '#e6c07b';
+            case 'Blur': return '#e6c07b';
+            case 'Threshold': return '#e6c07b';
+            case 'Line Detection': return '#61afef';
+            case 'Circle Detection': return '#61afef';
+            case 'If': return '#e06c75';
+            case 'While': return '#e06c75';
+            case 'For': return '#e06c75';
+            default: return '#abb2bf';
+        }
     }
 
     function drawGrid(ctx, canvasWidth, canvasHeight, zoom, panX, panY, gridSize = 20) {
         ctx.strokeStyle = '#4b5263';
         ctx.lineWidth = 0.5;
-        console.log('grid zoom: ', zoom);
+        // console.log('grid zoom: ', zoom);
         const scaledGridSize = gridSize;
-        const start_x = panX / zoom - (panX / zoom) % scaledGridSize
-        const start_y = panY / zoom - (panY / zoom) % scaledGridSize
-        console.log('gird x shift num, gird y shift num: ', start_x / zoom, start_y / zoom);
-        console.log('(panX / zoom) % scaledGridSize: ', (panX / zoom) % scaledGridSize);
+        const px_d_zoom = panX / zoom;
+        const py_d_zoom = panY / zoom;
+        const start_x = px_d_zoom - (px_d_zoom) % scaledGridSize
+        const start_y = py_d_zoom - (py_d_zoom) % scaledGridSize
+        // console.log('gird x shift num, gird y shift num: ', start_x / zoom, start_y / zoom);
+        // console.log('(px_d_zoom) % scaledGridSize: ', (px_d_zoom) % scaledGridSize);
         for (let x = -start_x; x < (canvasWidth - panX) / zoom; x += scaledGridSize) {
             ctx.beginPath();
-            ctx.moveTo(x, - panY / zoom);
+            ctx.moveTo(x, - py_d_zoom);
             ctx.lineTo(x, (canvasHeight - panY) / zoom);
             ctx.stroke();
         }
         for (let y = -start_y; y < (canvasHeight - panY) / zoom; y += scaledGridSize) {
             ctx.beginPath();
-            ctx.moveTo(-panX / zoom, y);
+            ctx.moveTo(-px_d_zoom, y);
             ctx.lineTo((canvasWidth - panX) / zoom, y);
             ctx.stroke();
         }
@@ -815,6 +859,13 @@ document.addEventListener('DOMContentLoaded', () => {
             x: evt.clientX - rect.left,
             y: evt.clientY - rect.top
         };
+    }
+
+    // new added
+    function worldToProcedureCanvasCoords(worldX, worldY) {
+        const canvasX = (worldX) * procedureZoom + procedurePan.x;
+        const canvasY = (worldY) * procedureZoom + procedurePan.y;
+        return { x: canvasX, y: canvasY };
     }
 
     function procedureCanvasToWorldCoords(canvasX, canvasY) {
@@ -840,15 +891,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleProcedureCanvasMouseDown(e) {
-        // nodeContextMenu.classList.add('hidden');
+        nodeContextMenu.classList.add('hidden');
 
         const mousePos = getProcedureMousePos(procedureCanvas, e);
         const worldMousePos = procedureCanvasToWorldCoords(mousePos.x, mousePos.y);
 
-        // selectedNode = procedureNodes.find(node =>
-        //     worldMousePos.x >= node.x && worldMousePos.x <= node.x + node.width &&
-        //     worldMousePos.y >= node.y && worldMousePos.y <= node.y + node.height
-        // );
+        selectedNode = procedureNodes.find(node =>
+            worldMousePos.x >= node.x && worldMousePos.x <= node.x + node.width &&
+            worldMousePos.y >= node.y && worldMousePos.y <= node.y + node.height
+        );
 
         if (selectedNode) {
             isDraggingNode = true;
@@ -960,10 +1011,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- logic for display tools on hover in the middle panel --- -----------------------------------------------------------------------------
-    const tools = document.querySelectorAll('.tool');
     let hideTimeout = null; // To manage delayed hiding of the popup
     let activePopup = null; // To keep track of the currently displayed popup
 
+    // middlePanel event listeners for dropping
+    middlePanel.addEventListener('dragover', (event) => {
+        event.preventDefault(); // Essential to allow a drop
+        event.dataTransfer.dropEffect = 'copy'; // Visual feedback for 'copy' operation
+        middlePanel.classList.add('drop-highlight'); // Add visual highlight to middlePanel
+    });
+    middlePanel.addEventListener('dragleave', () => {
+        middlePanel.classList.remove('drop-highlight'); // Remove highlight when drag leaves
+    });
+    middlePanel.addEventListener('drop', (event) => {
+        event.preventDefault(); // Prevent default drop behavior (e.g., opening file)
+        middlePanel.classList.remove('drop-highlight'); // Remove highlight
+
+        // const toolName = event.dataTransfer.getData('text/plain'); // Get the data (tool name)
+
+        // // Create a new element to represent the dropped tool in the middlePanel
+        // const newToolElement = document.createElement('div');
+        // newToolElement.textContent = toolName;
+        // newToolElement.classList.add('dropped-tool');
+
+        // middlePanel.appendChild(newToolElement); // Add the new tool to the middlePanel
+    });
 
     tools.forEach(tool => {
         // When mouse enters a main tool
@@ -1001,22 +1073,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     popup.appendChild(clonedSubTool);
                 });
 
-                // Calculate vertical position of the popup relative to the workspace
+                // Calculate vertical position of the popup relative to the middlepanel
                 const toolRect = tool.getBoundingClientRect(); // Position of the hovered tool
-                const workspaceRect = middlePanel.getBoundingClientRect(); // Position of the workspace
+                const middlepanelRect = middlePanel.getBoundingClientRect(); // Position of the middlepanel
 
                 // Align the top of the popup with the top of the hovered tool
-                // Adjust for workspace's own top offset
-                let topPosition = toolRect.top - workspaceRect.top;
+                // Adjust for middlepanel's own top offset
+                let topPosition = toolRect.top - middlepanelRect.top;
+                let leftPosition = middlepanelRect.left;
 
                 // Optional: Add a small vertical offset for visual spacing
-                topPosition += 10;
+                topPosition += 0;
 
                 // Apply the calculated position to the popup
                 popup.style.top = `${topPosition}px`;
-                popup.style.left = '130px'; // Fixed left offset from the workspace's left edge
+                popup.style.left = `${leftPosition}px`; // Fixed left offset from the middlepanel's left edge
 
-                middlePanel.appendChild(popup); // Add the popup to the workspace
+                middlePanel.appendChild(popup); // Add the popup to the middlepanel
                 activePopup = popup; // Set this as the currently active popup
 
                 // Add mouseleave listener to the popup itself
@@ -1054,6 +1127,90 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // NEW: Dragover handler for procedure canvas
+    function handleProcedureCanvasDragOver(e) {
+        e.preventDefault(); // Allow drop
+        e.dataTransfer.dropEffect = 'copy'; // Visual feedback for drop
+    }
+    // NEW: Drop handler for procedure canvas
+    function handleProcedureCanvasDrop(e) {
+        e.preventDefault();
+        const nodeType = e.dataTransfer.getData('text/plain');
+        if (nodeType) {
+            const mousePos = getProcedureMousePos(procedureCanvas, e);
+            const worldDropPos = procedureCanvasToWorldCoords(mousePos.x, mousePos.y);
+
+            const newNode = {
+                id: Date.now(),
+                type: nodeType,
+                text: `${nodeType.charAt(0).toUpperCase() + nodeType.slice(1)} ${procedureNodes.length + 1}`,
+                x: worldDropPos.x - (NODE_WIDTH / 2),
+                y: worldDropPos.y - (NODE_HEIGHT / 2),
+                width: NODE_WIDTH,
+                height: NODE_HEIGHT
+            };
+            procedureNodes.push(newNode);
+            console.log('procedure node: ', procedureNodes);
+            drawProcedureCanvas();
+            drawOverviewCanvas();
+        }
+    }
+
+    // --- Custom Context Menu Actions ---
+    contextDeleteNodeBtn.addEventListener('click', () => {
+        if (selectedNode) {
+            procedureNodes = procedureNodes.filter(node => node !== selectedNode);
+            selectedNode = null;
+            drawProcedureCanvas();
+            drawOverviewCanvas();
+            nodeContextMenu.classList.add('hidden');
+        }
+    });
+
+    contextCopyNodeBtn.addEventListener('click', () => {
+        if (selectedNode) {
+            clipboardNode = { ...selectedNode };
+            clipboardNode.id = Date.now();
+            clipboardNode.x += 20;
+            clipboardNode.y += 20;
+            console.log('Node copied to clipboard:', clipboardNode);
+            nodeContextMenu.classList.add('hidden');
+        }
+    });
+
+    function handleProcedureCanvasContextMenu(e) {
+        e.preventDefault();
+
+        const mousePos = getProcedureMousePos(procedureCanvas, e);
+        const worldMousePos = procedureCanvasToWorldCoords(mousePos.x, mousePos.y);
+
+        selectedNode = procedureNodes.find(node =>
+            worldMousePos.x >= node.x && worldMousePos.x <= node.x + node.width &&
+            worldMousePos.y >= node.y && worldMousePos.y <= node.y + node.height
+        );
+
+        if (selectedNode) {
+            nodeContextMenu.style.left = `${e.clientX}px`;
+            nodeContextMenu.style.top = `${e.clientY}px`;
+            nodeContextMenu.classList.remove('hidden');
+            drawProcedureCanvas();
+        } else {
+            nodeContextMenu.classList.add('hidden');
+        }
+    }
+
+    // Hide context menu if clicking anywhere else
+    document.addEventListener('click', (e) => {
+        if (!nodeContextMenu.contains(e.target)) {
+            nodeContextMenu.classList.add('hidden');
+            selectedNode = null;
+            drawProcedureCanvas();
+        }
+    });
+
+
+
+
 
 
     // --- Initial Setup ---
@@ -1071,6 +1228,9 @@ document.addEventListener('DOMContentLoaded', () => {
     procedureCanvas.addEventListener('mousedown', handleProcedureCanvasMouseDown);
     procedureCanvas.addEventListener('mousemove', handleProcedureCanvasMouseMove);
     procedureCanvas.addEventListener('mouseup', handleProcedureCanvasMouseUp);
+    procedureCanvas.addEventListener('dragover', handleProcedureCanvasDragOver); 
+    procedureCanvas.addEventListener('drop', handleProcedureCanvasDrop);      
+    procedureCanvas.addEventListener('contextmenu', handleProcedureCanvasContextMenu);
 
 
 
