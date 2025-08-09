@@ -62,7 +62,7 @@
                 <div class="procedure-canvas-container">
                     <canvas id="procedureCanvas"></canvas>
                     <div class="overview-window-wrapper">
-                        <button id="toggle-overview-btn" class="overview-toggle-btn" title="Toggle Overview (O)">
+                        <button id="toggle-overview-btn" class="overview-toggle-btn" title="Overview">
                             &#9650;
                         </button>
                         <div class="overview-window hidden">
@@ -91,30 +91,23 @@
             </div>
             <div class="vertical-resizer" id="right-top-bottom-resizer"></div>
             <div class="right-bottom-panel">
-                <h2>AI Assistant</h2>
-                <div class="ai-assistant-content">
-                    <p>Ask about the <strong>selected node</strong>:</p>
-                    <textarea id="ai-prompt-input" placeholder="e.g., Suggest next steps for this node, Explain its function..."></textarea>
-                    <button id="generate-insight-btn">Generate Insight</button>
-                    <div id="ai-loading-indicator" class="loading-spinner hidden"></div>
-                    <div id="ai-response-output"></div>
-                </div>
+                <h2>Variables</h2>
+
             </div>
         </div>
     </div>
 
     <div id="node-context-menu" class="context-menu hidden">
-        <div class="context-menu-item" id="context-delete-node">Delete Node <span>(Del)</span></div>
-        <div class="context-menu-item" id="context-copy-node">Copy Node <span>(Ctrl+C)</span></div>
+        <div class="context-menu-item" id="context-delete-node">Delete Node</div>
+        <div class="context-menu-item" id="context-copy-node">Copy Node</div>
     </div>
 
     <!-- New: Context Menu for Canvas Background -->
     <div id="canvas-context-menu" class="context-menu hidden">
-        <div class="context-menu-item" id="context-pan-mode">Pan Mode <span>(P)</span></div>
-        <div class="context-menu-item" id="context-select-mode">Select Mode <span>(S)</span></div>
-        <div class="context-menu-item" id="context-clear-selection">Clear Node Selection</div>
+        <div class="context-menu-item" id="context-pan-mode">Pan Mode</div>
+        <div class="context-menu-item" id="context-select-mode">Select Mode</div>
+        <div class="context-menu-item" id="context-clear-selection">Clear Selection</div>
         <div class="context-menu-item" id="context-delete-all-connections">Delete All Connections</div>
-        <div class="context-menu-item" id="context-delete-selected-connection">Delete Selected Connection <span>(Del)</span></div>
     </div>
 
     <script src="renderer.js"></script>

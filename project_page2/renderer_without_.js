@@ -726,32 +726,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let overviewDragLastX = 0;
     let overviewDragLastY = 0;
 
-    // New: Variables for selection mode
-    let currentProcedureMode = 'pan'; // 'pan' or 'select'
-    let isDrawingSelection = false;
-    let selectionStart = { x: 0, y: 0 };
-    let selectionCurrent = { x: 0, y: 0 };
-    let selectedNodes = []; // Array of currently selected nodes
-
     const tools = document.querySelectorAll('.tool');
     const addNodeButtons = document.querySelectorAll('.add-nodes-button');
     const clearNodeBtn = document.getElementById('clear-nodes-btn')
     const nodeContextMenu = document.getElementById('node-context-menu');
     const contextDeleteNodeBtn = document.getElementById('context-delete-node');
     const contextCopyNodeBtn = document.getElementById('context-copy-node');
-
-    // New: Canvas Context Menu Elements
-    const canvasContextMenu = document.getElementById('canvas-context-menu');
-    const contextPanModeBtn = document.getElementById('context-pan-mode');
-    const contextSelectModeBtn = document.getElementById('context-select-mode');
-    const contextClearSelectionBtn = document.getElementById('context-clear-selection');
-
-
     let procedureNodes = []; // Stores {id, type, text, x, y, width, height}
     let isDraggingNode = false; // For dragging existing nodes on canvas
     let dragOffsetX = 0;
     let dragOffsetY = 0;
-    let selectedNode = null; // Currently selected node for single dragging/context menu (will be extended for multi-select)
+    let selectedNode = null; // Currently selected node for dragging/context menu
     let clipboardNode = null; // For copy/paste functionality
     const NODE_WIDTH = 120;
     const NODE_HEIGHT = 40;
@@ -827,12 +812,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const height = node.height;
 
             procedureCtx.fillStyle = getNodeColor(node.type);
-            
-            // Highlight selected nodes
-            const isNodeSelected = selectedNodes.includes(node);
-            procedureCtx.strokeStyle = isNodeSelected || selectedNode === node ? '#61afef' : '#5c6370';
-            procedureCtx.lineWidth = isNodeSelected || selectedNode === node ? 3 : 1;
-            
+            procedureCtx.strokeStyle = selectedNode === node ? '#61afef' : '#5c6370';
+            procedureCtx.lineWidth = selectedNode === node ? 3 : 1;
             drawRoundedRect(procedureCtx, x, y, width, height, 8);
             procedureCtx.fill();
             procedureCtx.stroke();
@@ -843,20 +824,6 @@ document.addEventListener('DOMContentLoaded', () => {
             procedureCtx.textBaseline = 'middle';
             procedureCtx.fillText(node.text, x + width / 2, y + height / 2);
         });
-
-        // Draw selection rectangle if currently drawing
-        if (isDrawingSelection && currentProcedureMode === 'select') {
-            procedureCtx.strokeStyle = '#61afef';
-            procedureCtx.lineWidth = 1;
-            procedureCtx.setLineDash([5, 5]); // Dashed line
-            const rectX = Math.min(selectionStart.x, selectionCurrent.x);
-            const rectY = Math.min(selectionStart.y, selectionCurrent.y);
-            const rectWidth = Math.abs(selectionStart.x - selectionCurrent.x);
-            const rectHeight = Math.abs(selectionStart.y - selectionCurrent.y);
-            procedureCtx.strokeRect(rectX, rectY, rectWidth, rectHeight);
-            procedureCtx.setLineDash([]); // Reset line dash
-        }
-
         procedureCtx.restore();
     }
 
@@ -911,6 +878,13 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // new added
+    function worldToProcedureCanvasCoords(worldX, worldY) {
+        const canvasX = (worldX) * procedureZoom + procedurePan.x;
+        const canvasY = (worldY) * procedureZoom + procedurePan.y;
+        return { x: canvasX, y: canvasY };
+    }
+
     function procedureCanvasToWorldCoords(canvasX, canvasY) {
         const worldX = (canvasX - procedurePan.x) / procedureZoom;
         const worldY = (canvasY - procedurePan.y) / procedureZoom;
@@ -940,7 +914,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleProcedureCanvasMouseDown(e) {
         nodeContextMenu.classList.add('hidden');
-        canvasContextMenu.classList.add('hidden'); // Hide canvas context menu
 
         const mousePos = getProcedureMousePos(procedureCanvas, e);
         const worldMousePos = procedureCanvasToWorldCoords(mousePos.x, mousePos.y);
@@ -950,48 +923,18 @@ document.addEventListener('DOMContentLoaded', () => {
             worldMousePos.y >= node.y && worldMousePos.y <= node.y + node.height
         );
 
-        // If clicking on a node
         if (selectedNode) {
-            if (!e.ctrlKey && !e.metaKey && !selectedNodes.includes(selectedNode)) { // If Ctrl/Cmd not held and node not already selected
-                selectedNodes = [selectedNode]; // Select only this node
-            } else if (e.ctrlKey || e.metaKey) { // If Ctrl/Cmd held
-                if (selectedNodes.includes(selectedNode)) {
-                    selectedNodes = selectedNodes.filter(node => node !== selectedNode); // Deselect
-                } else {
-                    selectedNodes.push(selectedNode); // Add to selection
-                }
-            } else if (selectedNodes.includes(selectedNode)) {
-                // If clicking an already selected node without Ctrl/Cmd, just make it the active dragging node
-                // No change to selectedNodes, as it's already in there
-            } else { // Clicking a non-selected node without Ctrl/Cmd
-                selectedNodes = [selectedNode];
-            }
-
             isDraggingNode = true;
-            // Calculate offset for the *primary* dragged node (selectedNode)
             dragOffsetX = worldMousePos.x - selectedNode.x;
             dragOffsetY = worldMousePos.y - selectedNode.y;
             procedureCanvas.style.cursor = 'grabbing';
-        } else { // Clicking on empty canvas space
-            // Clear selection if not in selection mode or if not Ctrl/Cmd click
-            if (!e.ctrlKey && !e.metaKey) {
-                selectedNodes = [];
-            }
-            selectedNode = null; // Clear single selected node
-
-            if (currentProcedureMode === 'pan') {
-                isPanningProcedureCanvas = true;
-                lastPanMouseX = e.clientX;
-                lastPanMouseY = e.clientY;
-                procedureCanvas.style.cursor = 'grabbing';
-            } else if (currentProcedureMode === 'select') {
-                isDrawingSelection = true;
-                selectionStart = { x: worldMousePos.x, y: worldMousePos.y };
-                selectionCurrent = { x: worldMousePos.x, y: worldMousePos.y };
-                procedureCanvas.style.cursor = 'crosshair';
-            }
+        } else {
+            isPanningProcedureCanvas = true;
+            lastPanMouseX = e.clientX;
+            lastPanMouseY = e.clientY;
+            procedureCanvas.style.cursor = 'grabbing';
         }
-        drawProcedureCanvas(); // Redraw to show selection changes
+        drawProcedureCanvas();
     }
 
     function handleProcedureCanvasMouseMove(e) {
@@ -999,14 +942,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const worldMousePos = procedureCanvasToWorldCoords(mousePos.x, mousePos.y);
 
         if (isDraggingNode && selectedNode) {
-            const dx = worldMousePos.x - (selectedNode.x + dragOffsetX);
-            const dy = worldMousePos.y - (selectedNode.y + dragOffsetY);
-            
-            // Move all selected nodes by the same delta
-            selectedNodes.forEach(node => {
-                node.x += dx;
-                node.y += dy;
-            });
+            selectedNode.x = worldMousePos.x - dragOffsetX;
+            selectedNode.y = worldMousePos.y - dragOffsetY;
             drawProcedureCanvas();
             drawOverviewCanvas();
         } 
@@ -1022,56 +959,13 @@ document.addEventListener('DOMContentLoaded', () => {
             
             drawProcedureCanvas();
             drawOverviewCanvas();
-        } else if (isDrawingSelection && currentProcedureMode === 'select') {
-            selectionCurrent = { x: worldMousePos.x, y: worldMousePos.y };
-            drawProcedureCanvas();
         }
     }
 
-    function handleProcedureCanvasMouseUp(e) {
+    function handleProcedureCanvasMouseUp() {
         isDraggingNode = false;
         isPanningProcedureCanvas = false;
-        isDrawingSelection = false;
-
-        // Update cursor based on current mode
-        updateProcedureCanvasCursor();
-
-        if (currentProcedureMode === 'select') {
-            const rectX = Math.min(selectionStart.x, selectionCurrent.x);
-            const rectY = Math.min(selectionStart.y, selectionCurrent.y);
-            const rectWidth = Math.abs(selectionStart.x - selectionCurrent.x);
-            const rectHeight = Math.abs(selectionStart.y - selectionCurrent.y);
-
-            // Select nodes that intersect with the selection rectangle
-            const newlySelected = procedureNodes.filter(node => {
-                return node.x < rectX + rectWidth &&
-                       node.x + node.width > rectX &&
-                       node.y < rectY + rectHeight &&
-                       node.y + node.height > rectY;
-            });
-
-            // If Ctrl/Cmd is held, toggle selection for intersecting nodes
-            if (e.ctrlKey || e.metaKey) {
-                newlySelected.forEach(node => {
-                    if (selectedNodes.includes(node)) {
-                        selectedNodes = selectedNodes.filter(n => n !== node);
-                    } else {
-                        selectedNodes.push(node);
-                    }
-                });
-            } else {
-                selectedNodes = newlySelected; // Replace selection
-            }
-        }
-        drawProcedureCanvas(); // Redraw to show final selection
-    }
-
-    function updateProcedureCanvasCursor() {
-        if (currentProcedureMode === 'pan') {
-            procedureCanvas.style.cursor = 'grab';
-        } else if (currentProcedureMode === 'select') {
-            procedureCanvas.style.cursor = 'crosshair';
-        }
+        procedureCanvas.style.cursor = 'grab';
     }
 
     function drawOverviewCanvas() {
@@ -1100,7 +994,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Draw current viewport rectangle on overview
         overviewCtx.strokeStyle = '#e6c07b';
-        overviewCtx.lineWidth = 18 / actualOverviewScale; // Scale line width inversely so it appears constant
+        overviewCtx.lineWidth = 18; // Scale line width inversely so it appears constant
         overviewCtx.strokeRect(
             (-procedurePan.x / procedureZoom), // X-coordinate of visible area in world coords
             (-procedurePan.y / procedureZoom), // Y-coordinate of visible area in world coords
@@ -1330,18 +1224,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Node Context Menu Actions ---
+    // --- Custom Context Menu Actions ---
     contextDeleteNodeBtn.addEventListener('click', () => {
-        if (selectedNode) { // If a single node was selected by right-click
+        if (selectedNode) {
             procedureNodes = procedureNodes.filter(node => node !== selectedNode);
             selectedNode = null;
-            selectedNodes = []; // Clear any multi-selection as well
-            drawProcedureCanvas();
-            drawOverviewCanvas();
-            nodeContextMenu.classList.add('hidden');
-        } else if (selectedNodes.length > 0) { // If multiple nodes are selected
-            procedureNodes = procedureNodes.filter(node => !selectedNodes.includes(node));
-            selectedNodes = []; // Clear selection
             drawProcedureCanvas();
             drawOverviewCanvas();
             nodeContextMenu.classList.add('hidden');
@@ -1349,31 +1236,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     contextCopyNodeBtn.addEventListener('click', () => {
-        if (selectedNode) { // If a single node was selected by right-click
+        if (selectedNode) {
             clipboardNode = { ...selectedNode };
             clipboardNode.id = Date.now();
             clipboardNode.x += 20;
             clipboardNode.y += 20;
             console.log('Node copied to clipboard:', clipboardNode);
             nodeContextMenu.classList.add('hidden');
-        } else if (selectedNodes.length > 0) { // If multiple nodes are selected
-            // For simplicity, copy only the first selected node for now
-            // To copy all, you'd iterate and store an array of cloned nodes in clipboardNode
-            clipboardNode = { ...selectedNodes[0] };
-            clipboardNode.id = Date.now();
-            clipboardNode.x += 20;
-            clipboardNode.y += 20;
-            console.log('First selected node copied to clipboard:', clipboardNode);
-            nodeContextMenu.classList.add('hidden');
         }
     });
 
     function handleProcedureCanvasContextMenu(e) {
         e.preventDefault();
-
-        // Hide any other context menus
-        nodeContextMenu.classList.add('hidden');
-        canvasContextMenu.classList.add('hidden');
 
         const mousePos = getProcedureMousePos(procedureCanvas, e);
         const worldMousePos = procedureCanvasToWorldCoords(mousePos.x, mousePos.y);
@@ -1384,130 +1258,64 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         if (selectedNode) {
-            // If right-clicked on a node, set it as the *single* selected node for context menu operations
-            // This might override a multi-selection if you right-click a node that wasn't part of it,
-            // or if you right-click a node that *is* part of it, it ensures `selectedNode` is set correctly.
-            // Consider if you want right-clicking an already selected node in a group to act on the group.
-            if (!selectedNodes.includes(selectedNode)) {
-                selectedNodes = [selectedNode]; // Clear multi-selection and select just this one
-            }
-            drawProcedureCanvas(); // To highlight the clicked node
-
             nodeContextMenu.style.left = `${e.clientX}px`;
             nodeContextMenu.style.top = `${e.clientY}px`;
             nodeContextMenu.classList.remove('hidden');
+            drawProcedureCanvas();
         } else {
-            // If right-clicked on empty canvas, show canvas-specific context menu
-            canvasContextMenu.style.left = `${e.clientX}px`;
-            canvasContextMenu.style.top = `${e.clientY}px`;
-            canvasContextMenu.classList.remove('hidden');
+            nodeContextMenu.classList.add('hidden');
         }
     }
 
-    // Hide context menus if clicking anywhere else
+    // Hide context menu if clicking anywhere else
     document.addEventListener('click', (e) => {
         if (!nodeContextMenu.contains(e.target)) {
             nodeContextMenu.classList.add('hidden');
-            // If not clicking on node context menu, clear single selectedNode
-            // but keep multi-selection unless clicking on empty space directly.
-            // selectedNode = null; 
-            // drawProcedureCanvas();
-        }
-        if (!canvasContextMenu.contains(e.target)) {
-            canvasContextMenu.classList.add('hidden');
+            selectedNode = null;
+            drawProcedureCanvas();
         }
     });
-
-    // --- Canvas Context Menu Actions ---
-    contextPanModeBtn.addEventListener('click', () => {
-        currentProcedureMode = 'pan';
-        updateProcedureCanvasCursor();
-        canvasContextMenu.classList.add('hidden');
-        selectedNodes = []; // Clear selection when switching modes
-        drawProcedureCanvas();
-    });
-
-    contextSelectModeBtn.addEventListener('click', () => {
-        currentProcedureMode = 'select';
-        updateProcedureCanvasCursor();
-        canvasContextMenu.classList.add('hidden');
-        selectedNodes = []; // Clear selection when switching modes
-        drawProcedureCanvas();
-    });
-
-    contextClearSelectionBtn.addEventListener('click', () => {
-        selectedNodes = [];
-        drawProcedureCanvas();
-        canvasContextMenu.classList.add('hidden');
-    });
-
-
     let init_copy_offset = 30;
     let copy_offset = init_copy_offset;
     // --- Keyboard Shortcuts ---
     document.addEventListener('keydown', (e) => {
-        // Prevent shortcuts if typing in input/textarea
         if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
             return;
         }
 
-        if (e.key === 'Delete' && selectedNodes.length > 0) { // Delete selected nodes
+        if (e.key === 'Delete' && selectedNode) {
             e.preventDefault();
-            procedureNodes = procedureNodes.filter(node => !selectedNodes.includes(node));
-            selectedNodes = []; // Clear selection
-            selectedNode = null; // Clear single selected node
+            procedureNodes = procedureNodes.filter(node => node !== selectedNode);
+            selectedNode = null;
             drawProcedureCanvas();
             drawOverviewCanvas();
             nodeContextMenu.classList.add('hidden');
         }
 
-        if ((e.ctrlKey || e.metaKey) && e.key === 'c' && selectedNodes.length > 0) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'c' && selectedNode) {
             e.preventDefault();
             copy_offset = init_copy_offset;
-            // For simplicity, copy all selected nodes. Store them in an array in clipboardNode.
-            // This example copies a single node, you'd extend this for multiple.
-            clipboardNode = selectedNodes.map(node => ({ ...node, id: Date.now() + Math.random() })); // Give new unique IDs
-            console.log('Nodes copied via keyboard:', clipboardNode);
+            clipboardNode = { ...selectedNode };
+            clipboardNode.id = Date.now();
+            console.log('Node copied via keyboard:', clipboardNode);
         }
 
-        if ((e.ctrlKey || e.metaKey) && e.key === 'v' && clipboardNode && clipboardNode.length > 0) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'v' && clipboardNode) {
             e.preventDefault();
-            const newNodes = clipboardNode.map(node => ({
-                ...node,
-                id: Date.now() + Math.random(), // Ensure unique ID for pasted node
-                x: node.x + copy_offset,
-                y: node.y + copy_offset
-            }));
-            
-            // Add new nodes to procedureNodes
-            newNodes.forEach(newNode => procedureNodes.push(newNode));
-            
-            // Select the newly pasted nodes
-            selectedNodes = newNodes;
-            selectedNode = newNodes[0]; // Set first pasted node as primary selected (optional)
-            
+            const pastedNode = { ...clipboardNode };
+            pastedNode.id = Date.now();
+            pastedNode.x += copy_offset;
+            pastedNode.y += copy_offset;
             copy_offset += init_copy_offset;
+            procedureNodes.push(pastedNode);
+            selectedNode = pastedNode;
             drawProcedureCanvas();
             drawOverviewCanvas();
-            console.log('Nodes pasted via keyboard:', newNodes);
-        }
-
-        // Keyboard shortcuts to switch modes (Optional but helpful)
-        if (e.key === 'p' || e.key === 'P') { // 'p' for Pan mode
-            currentProcedureMode = 'pan';
-            updateProcedureCanvasCursor();
-            selectedNodes = [];
-            drawProcedureCanvas();
-            e.preventDefault();
-        }
-        if (e.key === 's' || e.key === 'S') { // 's' for Select mode
-            currentProcedureMode = 'select';
-            updateProcedureCanvasCursor();
-            selectedNodes = [];
-            drawProcedureCanvas();
-            e.preventDefault();
+            console.log('Node pasted via keyboard:', pastedNode);
         }
     });
+
+
 
 
     // --- Initial Setup ---
@@ -1531,8 +1339,7 @@ document.addEventListener('DOMContentLoaded', () => {
     procedureCanvas.addEventListener('drop', handleProcedureCanvasDrop);      
     procedureCanvas.addEventListener('contextmenu', handleProcedureCanvasContextMenu);
 
-    // Initial cursor update
-    updateProcedureCanvasCursor();
+
 
     // This is the end of the code 
 });

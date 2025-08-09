@@ -575,6 +575,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let activeTool = 'default'; // 'default', 'rectangle', 'circle', 'pan'
     let isPanningImage = false;
+    let lastMousePos = {x: 0, y: 0}; // Initialize lastMousePos
 
     imageCanvas.addEventListener('mousedown', handleImageCanvasMouseDown);
     imageCanvas.addEventListener('mousemove', handleImageCanvasMouseMove);
@@ -717,11 +718,33 @@ document.addEventListener('DOMContentLoaded', () => {
     let procedureZoom = 1.0;
     const PROCEDURE_CANVAS_ZOOM_FACTOR = 0.1;
 
-    let over_rect = overviewCanvas.getBoundingClientRect();
-
     let isPanningProcedureCanvas = false; // For panning the canvas itself
     let lastPanMouseX = 0;
     let lastPanMouseY = 0;
+
+    let isDraggingOverviewRect = false; // New: For dragging the viewport on the overview
+    let overviewDragLastX = 0;
+    let overviewDragLastY = 0;
+
+    // New: Variables for selection mode
+    let currentProcedureMode = 'pan'; // 'pan' or 'select'
+    let isDrawingSelection = false;
+    let selectionStart = { x: 0, y: 0 };
+    let selectionCurrent = { x: 0, y: 0 };
+    let selectedNodes = []; // Array of currently selected nodes
+
+    // New: Variables for connections
+    let connections = []; // Stores { id: unique, sourceNodeId: id, sourcePort: '...', targetNodeId: id, targetPort: '...' }
+    let isDrawingNewConnection = false;
+    let startConnectionInfo = null; // { node: node_obj, port: 'top'|'bottom'|'left'|'right', x: worldX, y: worldY }
+    let tempConnectionEndCoords = { x: 0, y: 0 }; // World coordinates for the end of the temporary connection line
+    
+    // Updated connection point radii
+    const CONNECTION_POINT_VISUAL_RADIUS = 5; // How large the dot appears
+    const CONNECTION_POINT_HIT_RADIUS = 15; // Larger radius for mouse interaction
+
+    let selectedConnection = null; // Currently selected connection
+    let hoveredPortInfo = null; // Tracks which port is currently hovered { node: node_obj, port: '...' }
 
     const tools = document.querySelectorAll('.tool');
     const addNodeButtons = document.querySelectorAll('.add-nodes-button');
@@ -729,39 +752,70 @@ document.addEventListener('DOMContentLoaded', () => {
     const nodeContextMenu = document.getElementById('node-context-menu');
     const contextDeleteNodeBtn = document.getElementById('context-delete-node');
     const contextCopyNodeBtn = document.getElementById('context-copy-node');
+
+    // New: Canvas Context Menu Elements
+    const canvasContextMenu = document.getElementById('canvas-context-menu');
+    const contextPanModeBtn = document.getElementById('context-pan-mode');
+    const contextSelectModeBtn = document.getElementById('context-select-mode');
+    const contextClearSelectionBtn = document.getElementById('context-clear-selection');
+    const contextDeleteAllConnectionsBtn = document.getElementById('context-delete-all-connections');
+    const contextDeleteSelectedConnectionBtn = document.getElementById('context-delete-selected-connection');
+
+    // AI Assistant Elements
+    const aiPromptInput = document.getElementById('ai-prompt-input');
+    const generateInsightBtn = document.getElementById('generate-insight-btn');
+    const aiLoadingIndicator = document.getElementById('ai-loading-indicator');
+    const aiResponseOutput = document.getElementById('ai-response-output');
+
+
     let procedureNodes = []; // Stores {id, type, text, x, y, width, height}
     let isDraggingNode = false; // For dragging existing nodes on canvas
     let dragOffsetX = 0;
     let dragOffsetY = 0;
-    let selectedNode = null; // Currently selected node for dragging/context menu
+    let selectedNode = null; // Currently selected node for single dragging/context menu (will be extended for multi-select)
+    let clipboardNode = null; // For copy/paste functionality
     const NODE_WIDTH = 120;
     const NODE_HEIGHT = 40;
+    const procedure_canvas_len = 1500; // Conceptual world size (e.g., 1500x1500)
+    
+    // Helper function to clamp procedurePan within valid boundaries
+    function clampProcedurePan() {
+        // Calculate the minimum allowed pan values. This ensures the entire conceptual world
+        // (procedure_canvas_len x procedure_canvas_len) remains visible if zoomed out,
+        // or that you can't pan endlessly into empty space when zoomed in.
+        const minAllowedPanX = procedureCanvas.width - procedure_canvas_len * procedureZoom;
+        const minAllowedPanY = procedureCanvas.height - procedure_canvas_len * procedureZoom;
+
+        // Clamp procedurePan.x: It should be between `minAllowedPanX` (when world origin is far right)
+        // and `0` (when world origin is at canvas left edge).
+        procedurePan.x = Math.max(minAllowedPanX, procedurePan.x);
+        procedurePan.x = Math.min(0, procedurePan.x);
+
+        // Clamp procedurePan.y similarly.
+        procedurePan.y = Math.max(minAllowedPanY, procedurePan.y);
+        procedurePan.y = Math.min(0, procedurePan.y);
+    }
+
 
     // Toggle overview window
     toggleOverviewBtn.addEventListener('click', () => {
-
         overviewWindow.classList.toggle('hidden');
         toggleOverviewBtn.textContent = overviewWindow.classList.contains('hidden') ? '▲' : '▼';
 
         // Redraw overview if it becomes visible
         if (!overviewWindow.classList.contains('hidden')) {
-            over_rect = overviewCanvas.getBoundingClientRect();
-            console.log('show overview height: ', over_rect.height);    
             resizeProcedureCanvas(); // This will redraw overview
-        }
-        else{
-            over_rect = overviewCanvas.getBoundingClientRect();
-            console.log('hidden overview height: ', over_rect.height);            
         }
     });
 
     function resizeProcedureCanvas(initial = false) {
         const container = procedureCanvas.parentElement;
         procedureCanvas.width = container.clientWidth;
-        procedureCanvas.height = container.clientHeight;   // 会导致overview在拖拽的时候超出最低界限，高度变高，实际上应该是procedureCanvas的parent无定义？
-        // console.log('container.clientHeight: ', procedureCanvas.height);
+        procedureCanvas.height = container.clientHeight;
         overviewCanvas.width = overviewWindow.clientWidth;
         overviewCanvas.height = overviewWindow.clientHeight;
+        
+        clampProcedurePan(); // Re-clamp pan values after resize
         drawProcedureCanvas();
         drawOverviewCanvas();
     }
@@ -780,6 +834,117 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.closePath();
     }
     
+    // Helper function to get world coordinates of a node's connection point
+    function getNodePortCoords(node, portName) {
+        const halfWidth = node.width / 2;
+        const halfHeight = node.height / 2;
+        switch (portName) {
+            case 'top': return { x: node.x + halfWidth, y: node.y };
+            case 'bottom': return { x: node.x + halfWidth, y: node.y + node.height };
+            case 'left': return { x: node.x, y: node.y + halfHeight };
+            case 'right': return { x: node.x + node.width, y: node.y + halfHeight };
+            default: return { x: node.x, y: node.y }; // Should not happen
+        }
+    }
+
+    // Helper to draw an arrowhead
+    function drawArrowhead(ctx, toX, toY, fromX, fromY, size = 10) {
+        ctx.save();
+        ctx.fillStyle = ctx.strokeStyle; // Match arrowhead color to line color
+        const angle = Math.atan2(toY - fromY, toX - fromX);
+        ctx.translate(toX, toY);
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-size, size / 2);
+        ctx.lineTo(-size, -size / 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    // Helper to calculate Bezier control points for curved arrows
+    function getBezierControlPoints(p1, p2, port1, port2) {
+        const dist = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+        const minOffset = 50; // Minimum offset for curvature
+        const maxOffset = Math.max(minOffset, dist / 4); // Scale offset with distance
+
+        let cp1 = { x: p1.x, y: p1.y };
+        let cp2 = { x: p2.x, y: p2.y };
+
+        // Determine direction of "shoot out" from p1
+        if (port1 === 'top') cp1.y -= maxOffset;
+        else if (port1 === 'bottom') cp1.y += maxOffset;
+        else if (port1 === 'left') cp1.x -= maxOffset;
+        else if (port1 === 'right') cp1.x += maxOffset;
+
+        // Determine direction of "shoot in" towards p2
+        if (port2 === 'top') cp2.y -= maxOffset;
+        else if (port2 === 'bottom') cp2.y += maxOffset;
+        else if (port2 === 'left') cp2.x -= maxOffset;
+        else if (port2 === 'right') cp2.x += maxOffset;
+
+        // Adjust if control points are too collinear with start/end
+        // If they are mostly vertical and source/target are horizontal
+        if (Math.abs(p1.x - p2.x) > Math.abs(p1.y - p2.y)) { // More horizontal overall
+            if (port1 === 'top' || port1 === 'bottom') cp1.x = p1.x + (p2.x - p1.x) / 2;
+            if (port2 === 'top' || port2 === 'bottom') cp2.x = p1.x + (p2.x - p1.x) / 2;
+        } else { // More vertical overall
+            if (port1 === 'left' || port1 === 'right') cp1.y = p1.y + (p2.y - p1.y) / 2;
+            if (port2 === 'left' || port2 === 'right') cp2.y = p1.y + (p2.y - p1.y) / 2;
+        }
+
+        return { cp1, cp2 };
+    }
+
+    // Function to get a point on a cubic Bezier curve (for hit-testing)
+    function getPointOnBezier(p0, p1, p2, p3, t) {
+        const mt = 1 - t;
+        const mt2 = mt * mt;
+        const t2 = t * t;
+        const x = mt2 * mt * p0.x + 3 * mt2 * t * p1.x + 3 * mt * t2 * p2.x + t * t2 * p3.x;
+        const y = mt2 * mt * p0.y + 3 * mt2 * t * p1.y + 3 * mt * t2 * p2.y + t * t2 * p3.y;
+        return { x, y };
+    }
+
+    // Function to calculate squared distance between two points (for hit-testing)
+    function distSq(p1, p2) {
+        return (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
+    }
+
+
+    function drawConnection(ctx, connection, isTemporary = false, isSelected = false) {
+        const sourceNode = procedureNodes.find(n => n.id === connection.sourceNodeId);
+        const targetNode = isTemporary ? null : procedureNodes.find(n => n.id === connection.targetNodeId);
+
+        if (!sourceNode) return;
+
+        const startP = getNodePortCoords(sourceNode, connection.sourcePort);
+        const endP = isTemporary ? connection.endCoords : getNodePortCoords(targetNode, connection.targetPort);
+
+        if (!endP) return;
+
+        const { cp1, cp2 } = getBezierControlPoints(startP, endP, connection.sourcePort, connection.targetPort);
+
+        ctx.strokeStyle = isTemporary ? '#FFD700' : (isSelected ? '#FF00FF' : '#dcdcdc'); // Gold for temp, Magenta for selected, light grey for permanent
+        ctx.lineWidth = isTemporary ? 2 : (isSelected ? 3 : 1.5);
+        ctx.fillStyle = ctx.strokeStyle; // Arrowhead color matches line
+
+        ctx.beginPath();
+        ctx.moveTo(startP.x, startP.y);
+        ctx.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, endP.x, endP.y);
+        ctx.stroke();
+
+        // Draw arrowhead for permanent connections
+        if (!isTemporary) {
+            // To get a point near the end for the arrowhead, evaluate the bezier curve
+            // at a point slightly before the actual end point.
+            const t_arrow = 0.99; // A value very close to 1
+            const pointBeforeEnd = getPointOnBezier(startP, cp1, cp2, endP, t_arrow);
+            drawArrowhead(ctx, endP.x, endP.y, pointBeforeEnd.x, pointBeforeEnd.y);
+        }
+    }
+
 
     function drawProcedureCanvas() {
         procedureCtx.clearRect(0, 0, procedureCanvas.width, procedureCanvas.height);
@@ -788,26 +953,91 @@ document.addEventListener('DOMContentLoaded', () => {
         procedureCtx.scale(procedureZoom, procedureZoom);
         drawGrid(procedureCtx, procedureCanvas.width, procedureCanvas.height, procedureZoom, procedurePan.x, procedurePan.y);
 
+        // Draw existing connections first
+        connections.forEach(conn => {
+            drawConnection(procedureCtx, conn, false, conn === selectedConnection); // Pass isSelected flag
+        });
+
         procedureNodes.forEach(node => {
+            // Draw connection points (ports) - fill first, potentially under node
+            ['top', 'bottom', 'left', 'right'].forEach(portName => {
+                const portCoords = getNodePortCoords(node, portName);
+                const actualVisualRadius = CONNECTION_POINT_VISUAL_RADIUS / procedureZoom;
+
+                // Draw the transparent fill first (partially under the node)
+                procedureCtx.beginPath();
+                procedureCtx.arc(portCoords.x, portCoords.y, actualVisualRadius, 0, Math.PI * 2);
+                procedureCtx.fillStyle = 'rgba(192, 192, 192, 0.4)'; // Semi-transparent fill
+                procedureCtx.fill();
+            });
+
+            // Draw node body, stroke, and text (will draw over the inner part of ports)
             const { x, y } = node;
             const width = node.width;
             const height = node.height;
 
             procedureCtx.fillStyle = getNodeColor(node.type);
-            procedureCtx.strokeStyle = selectedNode === node ? '#61afef' : '#5c6370';
-            procedureCtx.lineWidth = selectedNode === node ? 3 : 1;
+            
+            // Highlight selected nodes
+            const isNodeSelected = selectedNodes.includes(node);
+            procedureCtx.strokeStyle = isNodeSelected || selectedNode === node ? '#61afef' : '#5c6370';
+            procedureCtx.lineWidth = isNodeSelected || selectedNode === node ? 3 : 1;
+            
             drawRoundedRect(procedureCtx, x, y, width, height, 8);
             procedureCtx.fill();
             procedureCtx.stroke();
-            // procedureCtx.fillRect(x, y, width, height);
-            // procedureCtx.strokeRect(x, y, width, height);
 
             procedureCtx.fillStyle = '#ffffff';
             procedureCtx.font = `${14}px Arial`;
             procedureCtx.textAlign = 'center';
             procedureCtx.textBaseline = 'middle';
             procedureCtx.fillText(node.text, x + width / 2, y + height / 2);
+
+            // Draw connection points (ports) - stroke last, on top for visibility and hover effect
+            ['top', 'bottom', 'left', 'right'].forEach(portName => {
+                const portCoords = getNodePortCoords(node, portName);
+                const actualVisualRadius = CONNECTION_POINT_VISUAL_RADIUS / procedureZoom;
+
+                // Draw highlight if hovered
+                if (hoveredPortInfo && hoveredPortInfo.node === node && hoveredPortInfo.port === portName) {
+                    procedureCtx.beginPath();
+                    procedureCtx.arc(portCoords.x, portCoords.y, actualVisualRadius + 3 / procedureZoom, 0, Math.PI * 2); // Slightly larger
+                    procedureCtx.strokeStyle = '#61afef'; // Blueish highlight
+                    procedureCtx.lineWidth = 2 / procedureZoom;
+                    procedureCtx.stroke();
+                }
+
+                // Draw the stroke (outer ring)
+                procedureCtx.beginPath();
+                procedureCtx.arc(portCoords.x, portCoords.y, actualVisualRadius, 0, Math.PI * 2);
+                procedureCtx.strokeStyle = '#333333';
+                procedureCtx.lineWidth = 1 / procedureZoom;
+                procedureCtx.stroke();
+            });
         });
+
+        // Draw selection rectangle if currently drawing
+        if (isDrawingSelection && currentProcedureMode === 'select') {
+            procedureCtx.strokeStyle = '#61afef';
+            procedureCtx.lineWidth = 1 / procedureZoom;
+            procedureCtx.setLineDash([5 / procedureZoom, 5 / procedureZoom]); // Dashed line
+            const rectX = Math.min(selectionStart.x, selectionCurrent.x);
+            const rectY = Math.min(selectionStart.y, selectionCurrent.y);
+            const rectWidth = Math.abs(selectionStart.x - selectionCurrent.x);
+            const rectHeight = Math.abs(selectionStart.y - selectionCurrent.y);
+            procedureCtx.strokeRect(rectX, rectY, rectWidth, rectHeight);
+            procedureCtx.setLineDash([]); // Reset line dash
+        }
+
+        // Draw temporary connection if creating one
+        if (isDrawingNewConnection && startConnectionInfo) {
+            drawConnection(procedureCtx, {
+                sourceNodeId: startConnectionInfo.node.id,
+                sourcePort: startConnectionInfo.port,
+                endCoords: tempConnectionEndCoords // Use temporary end coords
+            }, true); // Pass true for isTemporary
+        }
+
         procedureCtx.restore();
     }
 
@@ -830,24 +1060,25 @@ document.addEventListener('DOMContentLoaded', () => {
     function drawGrid(ctx, canvasWidth, canvasHeight, zoom, panX, panY, gridSize = 20) {
         ctx.strokeStyle = '#4b5263';
         ctx.lineWidth = 0.5;
-        // console.log('grid zoom: ', zoom);
-        const scaledGridSize = gridSize;
-        const px_d_zoom = panX / zoom;
-        const py_d_zoom = panY / zoom;
-        const start_x = px_d_zoom - (px_d_zoom) % scaledGridSize
-        const start_y = py_d_zoom - (py_d_zoom) % scaledGridSize
-        // console.log('gird x shift num, gird y shift num: ', start_x / zoom, start_y / zoom);
-        // console.log('(px_d_zoom) % scaledGridSize: ', (px_d_zoom) % scaledGridSize);
-        for (let x = -start_x; x < (canvasWidth - panX) / zoom; x += scaledGridSize) {
+
+        // Calculate visible world area
+        const worldViewLeft = -panX / zoom;
+        const worldViewTop = -panY / zoom;
+        const worldViewRight = worldViewLeft + canvasWidth / zoom;
+        const worldViewBottom = worldViewTop + canvasHeight / zoom;
+
+        // Draw vertical lines
+        for (let x = Math.floor(worldViewLeft / gridSize) * gridSize; x < worldViewRight; x += gridSize) {
             ctx.beginPath();
-            ctx.moveTo(x, - py_d_zoom);
-            ctx.lineTo(x, (canvasHeight - panY) / zoom);
+            ctx.moveTo(x, worldViewTop);
+            ctx.lineTo(x, worldViewBottom);
             ctx.stroke();
         }
-        for (let y = -start_y; y < (canvasHeight - panY) / zoom; y += scaledGridSize) {
+        // Draw horizontal lines
+        for (let y = Math.floor(worldViewTop / gridSize) * gridSize; y < worldViewBottom; y += gridSize) {
             ctx.beginPath();
-            ctx.moveTo(-px_d_zoom, y);
-            ctx.lineTo((canvasWidth - panX) / zoom, y);
+            ctx.moveTo(worldViewLeft, y);
+            ctx.lineTo(worldViewRight, y);
             ctx.stroke();
         }
     }
@@ -861,154 +1092,425 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // new added
-    function worldToProcedureCanvasCoords(worldX, worldY) {
-        const canvasX = (worldX) * procedureZoom + procedurePan.x;
-        const canvasY = (worldY) * procedureZoom + procedurePan.y;
-        return { x: canvasX, y: canvasY };
-    }
-
     function procedureCanvasToWorldCoords(canvasX, canvasY) {
         const worldX = (canvasX - procedurePan.x) / procedureZoom;
         const worldY = (canvasY - procedurePan.y) / procedureZoom;
         return { x: worldX, y: worldY };
     }
     // --- FINISH: utility functions for procedure canvas corrdinates ---
+
+    // New: Hit test for connection points
+    function hitTestConnectionPoint(worldMouseX, worldMouseY) {
+        for (const node of procedureNodes) {
+            for (const portName of ['top', 'bottom', 'left', 'right']) {
+                const portCoords = getNodePortCoords(node, portName);
+                const distance = Math.sqrt(
+                    Math.pow(worldMouseX - portCoords.x, 2) +
+                    Math.pow(worldMouseY - portCoords.y, 2)
+                );
+                // Use the larger HIT_TEST_CONNECTION_POINT_RADIUS for interaction
+                if (distance * procedureZoom <= CONNECTION_POINT_HIT_RADIUS) {
+                    return { node, port: portName };
+                }
+            }
+        }
+        return null;
+    }
+
+    // Hit test for connections
+    function hitTestConnection(worldMouseX, worldMouseY) {
+        const tolerance = 10 / procedureZoom; // Tolerance in world coordinates, scales with zoom
+        const toleranceSq = tolerance * tolerance;
+        const numSamples = 30; // Number of points to sample along the curve
+
+        for (const conn of connections) {
+            const sourceNode = procedureNodes.find(n => n.id === conn.sourceNodeId);
+            const targetNode = procedureNodes.find(n => n.id === conn.targetNodeId);
+
+            if (!sourceNode || !targetNode) continue;
+
+            const startP = getNodePortCoords(sourceNode, conn.sourcePort);
+            const endP = getNodePortCoords(targetNode, conn.targetPort);
+            const { cp1, cp2 } = getBezierControlPoints(startP, endP, conn.sourcePort, conn.targetPort);
+
+            for (let i = 0; i <= numSamples; i++) {
+                const t = i / numSamples;
+                const pointOnCurve = getPointOnBezier(startP, cp1, cp2, endP, t);
+                if (distSq({ x: worldMouseX, y: worldMouseY }, pointOnCurve) < toleranceSq) {
+                    return conn; // Return the hit connection
+                }
+            }
+        }
+        return null;
+    }
+
+
     function handleProcedureCanvasWheel(e) {
         e.preventDefault();
 
         const mousePos = getProcedureMousePos(procedureCanvas, e);
         const worldMousePosBeforeZoom = procedureCanvasToWorldCoords(mousePos.x, mousePos.y);
 
-        const scale = Math.exp(-e.deltaY * 0.001 * PROCEDURE_CANVAS_ZOOM_FACTOR);
-        const oldZoom = procedureZoom;
-        procedureZoom = Math.min(Math.max(0.5, procedureZoom * scale), 4);
+        const zoomFactor = 1.1;
+        const scale = (e.deltaY < 0) ? zoomFactor : 1 / zoomFactor; // Zoom in/out based on scroll direction
+        
+        procedureZoom = Math.min(Math.max(0.5, procedureZoom * scale), 4); // Keep zoom between 0.5 and 4
 
         procedurePan.x = mousePos.x - (worldMousePosBeforeZoom.x * procedureZoom);
         procedurePan.y = mousePos.y - (worldMousePosBeforeZoom.y * procedureZoom);
+
+        clampProcedurePan(); // Apply clamping after zoom and pan update
+        
         drawProcedureCanvas();
         drawOverviewCanvas();
     }
 
     function handleProcedureCanvasMouseDown(e) {
         nodeContextMenu.classList.add('hidden');
+        canvasContextMenu.classList.add('hidden'); // Hide canvas context menu
 
         const mousePos = getProcedureMousePos(procedureCanvas, e);
         const worldMousePos = procedureCanvasToWorldCoords(mousePos.x, mousePos.y);
 
-        selectedNode = procedureNodes.find(node =>
+        // Determine if a connection point, connection, or node was hit
+        const hitPort = hitTestConnectionPoint(worldMousePos.x, worldMousePos.y);
+        const hitConn = currentProcedureMode === 'select' ? hitTestConnection(worldMousePos.x, worldMousePos.y) : null;
+        const clickedNode = procedureNodes.find(node =>
             worldMousePos.x >= node.x && worldMousePos.x <= node.x + node.width &&
             worldMousePos.y >= node.y && worldMousePos.y <= node.y + node.height
         );
 
-        if (selectedNode) {
+        // --- Handle Connection Point Click (Start New Connection) ---
+        if (hitPort && e.button === 0) { // Left-click on a connection point
+            isDrawingNewConnection = true;
+            startConnectionInfo = hitPort;
+            tempConnectionEndCoords = { x: worldMousePos.x, y: worldMousePos.y };
+            procedureCanvas.style.cursor = 'crosshair';
+            // Clear all selections when starting a new connection
+            selectedNodes = [];
+            selectedNode = null;
+            selectedConnection = null;
+            hoveredPortInfo = null; // Clear hovered state
+            drawProcedureCanvas();
+            return; // Exit to prevent other mouse down logic
+        }
+
+        // --- Handle Connection Click (Select Connection) ---
+        if (hitConn && e.button === 0 && currentProcedureMode === 'select') { // Left-click a connection in select mode
+            selectedConnection = hitConn;
+            selectedNodes = []; // Clear node selection when selecting a connection
+            selectedNode = null;
+            drawProcedureCanvas();
+            return; // Only select connection, don't proceed to node/pan logic
+        }
+
+        // --- Handle Node Click (Select/Drag Nodes) ---
+        if (clickedNode) {
+            // If Ctrl/Cmd is held, toggle selection
+            if (e.ctrlKey || e.metaKey) {
+                if (selectedNodes.includes(clickedNode)) {
+                    selectedNodes = selectedNodes.filter(node => node !== clickedNode); // Deselect
+                } else {
+                    selectedNodes.push(clickedNode); // Add to selection
+                }
+            } else { // Ctrl/Cmd NOT held
+                if (!selectedNodes.includes(clickedNode)) {
+                    selectedNodes = [clickedNode]; // Select only this node, clear others
+                }
+                // If it's already selected and Ctrl/Cmd not held, it remains selected, allow dragging all selected
+            }
+            selectedNode = clickedNode; // Set the clicked node as the primary for dragging calculation
+            selectedConnection = null; // Clear connection selection
+
             isDraggingNode = true;
             dragOffsetX = worldMousePos.x - selectedNode.x;
             dragOffsetY = worldMousePos.y - selectedNode.y;
             procedureCanvas.style.cursor = 'grabbing';
-        } else {
+            drawProcedureCanvas(); // Redraw to show selection changes
+            return; // Exit to prevent other mouse down logic
+        }
+
+        // --- Handle Click on Empty Canvas Space ---
+        // If nothing else was clicked, clear all selections and proceed with pan/selection box
+        selectedNodes = [];
+        selectedNode = null;
+        selectedConnection = null;
+
+        if (currentProcedureMode === 'pan') {
             isPanningProcedureCanvas = true;
             lastPanMouseX = e.clientX;
             lastPanMouseY = e.clientY;
             procedureCanvas.style.cursor = 'grabbing';
+        } else if (currentProcedureMode === 'select') {
+            isDrawingSelection = true;
+            selectionStart = { x: worldMousePos.x, y: worldMousePos.y };
+            selectionCurrent = { x: worldMousePos.x, y: worldMousePos.y };
+            procedureCanvas.style.cursor = 'crosshair';
         }
-        drawProcedureCanvas();
+        drawProcedureCanvas(); // Redraw to show selection changes (e.g., cleared selection)
     }
 
     function handleProcedureCanvasMouseMove(e) {
         const mousePos = getProcedureMousePos(procedureCanvas, e);
         const worldMousePos = procedureCanvasToWorldCoords(mousePos.x, mousePos.y);
+        let redrawNeeded = false; // Flag to indicate if redraw is needed
 
-        if (isDraggingNode && selectedNode) {
-            selectedNode.x = worldMousePos.x - dragOffsetX;
-            selectedNode.y = worldMousePos.y - dragOffsetY;
-            drawProcedureCanvas();
-            drawOverviewCanvas();
+        if (isDrawingNewConnection) {
+            tempConnectionEndCoords = { x: worldMousePos.x, y: worldMousePos.y };
+            redrawNeeded = true;
+        } else if (isDraggingNode && selectedNode) {
+            const dx = worldMousePos.x - (selectedNode.x + dragOffsetX);
+            const dy = worldMousePos.y - (selectedNode.y + dragOffsetY);
+            
+            // Move all selected nodes by the same delta
+            selectedNodes.forEach(node => {
+                node.x += dx;
+                node.y += dy;
+            });
+            redrawNeeded = true;
+            drawOverviewCanvas(); // Overview needs to be redrawn if nodes move
         } 
-        else if (isPanningProcedureCanvas && e.buttons === 1) {
+        else if (isPanningProcedureCanvas && e.buttons === 1) { // Check for left mouse button held down
             const deltaX = e.clientX - lastPanMouseX;
             const deltaY = e.clientY - lastPanMouseY;
             procedurePan.x += deltaX;
             procedurePan.y += deltaY;
             lastPanMouseX = e.clientX;
             lastPanMouseY = e.clientY;
-            // procedurePan.x = Math.min(Math.max(procedurePan.x, -500 * procedureZoom), 500 * procedureZoom);
-            // procedurePan.y = Math.min(Math.max(procedurePan.y, -500 * procedureZoom), 500 * procedureZoom);
-            drawProcedureCanvas();
+
+            clampProcedurePan(); // Apply clamping
+            
+            redrawNeeded = true;
             drawOverviewCanvas();
+        } else if (isDrawingSelection && currentProcedureMode === 'select') {
+            selectionCurrent = { x: worldMousePos.x, y: worldMousePos.y };
+            redrawNeeded = true;
+        } else {
+            // Update hoveredPortInfo and cursor if no active operation
+            const newHoveredPortInfo = hitTestConnectionPoint(worldMousePos.x, worldMousePos.y);
+            const newHoveredConnection = hitTestConnection(worldMousePos.x, worldMousePos.y);
+
+            // Determine cursor based on what's under the mouse, in order of priority
+            if (newHoveredPortInfo) {
+                procedureCanvas.style.cursor = 'pointer';
+            } else if (newHoveredConnection && currentProcedureMode === 'select') {
+                procedureCanvas.style.cursor = 'pointer';
+            }
+            else {
+                updateProcedureCanvasCursor(); // Revert to mode-specific cursor
+            }
+
+            // Only redraw if hover state of ports changes
+            const hasHoveredPortChanged = (!hoveredPortInfo && newHoveredPortInfo) ||
+                                           (hoveredPortInfo && !newHoveredPortInfo) ||
+                                           (hoveredPortInfo && newHoveredPortInfo && 
+                                            (hoveredPortInfo.node !== newHoveredPortInfo.node || hoveredPortInfo.port !== newHoveredPortInfo.port));
+            
+            if (hasHoveredPortChanged) {
+                hoveredPortInfo = newHoveredPortInfo;
+                redrawNeeded = true;
+            }
+        }
+        
+        if (redrawNeeded) {
+            drawProcedureCanvas();
         }
     }
 
-    function handleProcedureCanvasMouseUp() {
+    function handleProcedureCanvasMouseUp(e) {
+        const mousePos = getProcedureMousePos(procedureCanvas, e);
+        const worldMousePos = procedureCanvasToWorldCoords(mousePos.x, mousePos.y);
+
+        if (isDrawingNewConnection) {
+            const endPortInfo = hitTestConnectionPoint(worldMousePos.x, worldMousePos.y);
+            if (endPortInfo && endPortInfo.node.id !== startConnectionInfo.node.id) { // Ensure not connecting to itself
+                // Check if connection already exists (order-agnostic)
+                const existingConnection = connections.some(conn =>
+                    (conn.sourceNodeId === startConnectionInfo.node.id && conn.sourcePort === startConnectionInfo.port &&
+                     conn.targetNodeId === endPortInfo.node.id && conn.targetPort === endPortInfo.port) ||
+                    (conn.sourceNodeId === endPortInfo.node.id && conn.sourcePort === endPortInfo.port && // Check reverse
+                     conn.targetNodeId === startConnectionInfo.node.id && conn.targetPort === startConnectionInfo.port)
+                );
+
+                if (!existingConnection) {
+                    // Create a new connection
+                    connections.push({
+                        id: Date.now(),
+                        sourceNodeId: startConnectionInfo.node.id,
+                        sourcePort: startConnectionInfo.port,
+                        targetNodeId: endPortInfo.node.id,
+                        targetPort: endPortInfo.port
+                    });
+                    console.log('New connection:', connections[connections.length - 1]);
+                } else {
+                    console.log('Connection already exists or is a duplicate (reversed).');
+                }
+            }
+            isDrawingNewConnection = false;
+            startConnectionInfo = null;
+            tempConnectionEndCoords = { x: 0, y: 0 };
+            drawProcedureCanvas();
+            updateProcedureCanvasCursor(); // Reset cursor
+            return; // Exit to prevent other mouse up logic
+        }
+
         isDraggingNode = false;
         isPanningProcedureCanvas = false;
-        procedureCanvas.style.cursor = 'grab';
-        // drawProcedureCanvas();
+        isDrawingSelection = false;
+
+        // Update cursor based on current mode
+        updateProcedureCanvasCursor();
+
+        if (currentProcedureMode === 'select') {
+            const rectX = Math.min(selectionStart.x, selectionCurrent.x);
+            const rectY = Math.min(selectionStart.y, selectionCurrent.y);
+            const rectWidth = Math.abs(selectionStart.x - selectionCurrent.x);
+            const rectHeight = Math.abs(selectionStart.y - selectionCurrent.y);
+
+            // Select nodes that intersect with the selection rectangle IF a selection rectangle was drawn (not a click)
+            if (rectWidth > 0 || rectHeight > 0) { // Check if a significant drag occurred
+                const newlySelectedNodes = procedureNodes.filter(node => {
+                    return node.x < rectX + rectWidth &&
+                           node.x + node.width > rectX &&
+                           node.y < rectY + rectHeight &&
+                           node.y + node.height > rectY;
+                });
+
+                // If Ctrl/Cmd is held, toggle selection for intersecting nodes
+                if (e.ctrlKey || e.metaKey) {
+                    newlySelectedNodes.forEach(node => {
+                        if (selectedNodes.includes(node)) {
+                            selectedNodes = selectedNodes.filter(n => n !== node);
+                        } else {
+                            selectedNodes.push(node);
+                        }
+                    });
+                } else {
+                    selectedNodes = newlySelectedNodes; // Replace selection
+                }
+                selectedConnection = null; // Clear connection selection after drawing selection box
+            }
+        }
+        drawProcedureCanvas(); // Redraw to show final selection
+    }
+
+    function updateProcedureCanvasCursor() {
+        if (currentProcedureMode === 'pan') {
+            procedureCanvas.style.cursor = 'grab';
+        } else if (currentProcedureMode === 'select') {
+            procedureCanvas.style.cursor = 'crosshair';
+        }
     }
 
     function drawOverviewCanvas() {
         overviewCtx.clearRect(0, 0, overviewCanvas.width, overviewCanvas.height);
-        // if (procedureNodes.length === 0) return;
-
-        // Calculate bounding box of all nodes
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        // procedureNodes.forEach(node => {
-        //     minX = Math.min(minX, node.x);
-        //     minY = Math.min(minY, node.y);
-        //     maxX = Math.max(maxX, node.x + 100); // Assuming node width 100
-        //     maxY = Math.max(maxY, node.y + 50);  // Assuming node height 50
-        // });
-
-        const contentWidth = maxX - minX;
-        const contentHeight = maxY - minY;
-
-        const overviewPadding = 10;
-        const scaleX = (overviewCanvas.width - overviewPadding * 2) / contentWidth;
-        const scaleY = (overviewCanvas.height - overviewPadding * 2) / contentHeight;
-        const overviewScale = Math.min(scaleX, scaleY);
+        
+        // Calculate scale to fit the entire procedure_canvas_len world into the overviewCanvas
+        const overviewScaleX = overviewCanvas.width / procedure_canvas_len;
+        const overviewScaleY = overviewCanvas.height / procedure_canvas_len;
+        const actualOverviewScale = Math.min(overviewScaleX, overviewScaleY);
 
         overviewCtx.save();
-        overviewCtx.translate(overviewPadding, overviewPadding);
-        overviewCtx.scale(overviewScale, overviewScale);
-        overviewCtx.translate(-minX, -minY); // Translate to origin of content
+        overviewCtx.scale(actualOverviewScale, actualOverviewScale);
 
-        // // Draw nodes on overview
-        // overviewCtx.fillStyle = '#4b5263';
-        // overviewCtx.strokeStyle = '#5c6370';
-        // procedureNodes.forEach(node => {
-        //     overviewCtx.fillRect(node.x, node.y, 100, 50);
-        //     overviewCtx.strokeRect(node.x, node.y, 100, 50);
-        // });
+        // Calculate offset to center the scaled world content within the overview canvas
+        const offsetX = (overviewCanvas.width / actualOverviewScale - procedure_canvas_len) / 2;
+        const offsetY = (overviewCanvas.height / actualOverviewScale - procedure_canvas_len) / 2;
+        overviewCtx.translate(offsetX, offsetY);
 
-        // // Draw connections on overview (simplified)
-        // overviewCtx.strokeStyle = '#abb2bf';
-        // procedureNodes.forEach(node => {
-        //     node.connections = node.connections || [];
-        //     node.connections.forEach(targetNodeId => {
-        //         const targetNode = procedureNodes.find(n => n.id === targetNodeId);
-        //         if (targetNode) {
-        //             overviewCtx.beginPath();
-        //             overviewCtx.moveTo(node.x + 50, node.y + 25);
-        //             overviewCtx.lineTo(targetNode.x + 50, targetNode.y + 25);
-        //             overviewCtx.stroke();
-        //         }
-        //     });
-        // });
+        // Draw nodes on overview
+        procedureNodes.forEach(node => {
+            overviewCtx.strokeStyle = '#5c0070';      
+            overviewCtx.fillStyle = getNodeColor(node.type);
+            overviewCtx.fillRect(node.x, node.y, NODE_WIDTH, NODE_HEIGHT);
+            overviewCtx.strokeRect(node.x, node.y, NODE_WIDTH, NODE_HEIGHT);
+        });
 
         // Draw current viewport rectangle on overview
         overviewCtx.strokeStyle = '#e6c07b';
-        overviewCtx.lineWidth = 3 / overviewScale; // Scale line width back
+        overviewCtx.lineWidth = 18; // Fixed line width of 18 pixels
         overviewCtx.strokeRect(
-            (-procedurePan.x / procedureZoom),
-            (-procedurePan.y / procedureZoom),
-            (procedureCanvas.width / procedureZoom),
-            (procedureCanvas.height / procedureZoom)
+            (-procedurePan.x / procedureZoom), // X-coordinate of visible area in world coords
+            (-procedurePan.y / procedureZoom), // Y-coordinate of visible area in world coords
+            (procedureCanvas.width / procedureZoom), // Width of visible area in world coords
+            (procedureCanvas.height / procedureZoom) // Height of visible area in world coords
         );
-
         overviewCtx.restore();
     }
 
+    // --- Overview Canvas Interaction for dragging viewport ---
+    overviewCanvas.addEventListener('mousedown', handleOverviewMouseDown);
+    overviewCanvas.addEventListener('mousemove', handleOverviewMouseMove);
+    overviewCanvas.addEventListener('mouseup', handleOverviewMouseUp);
+    overviewCanvas.addEventListener('mouseleave', handleOverviewMouseUp); // Release drag if mouse leaves overview canvas
 
+    function handleOverviewMouseDown(e) {
+        const rect = overviewCanvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const overviewScaleX = overviewCanvas.width / procedure_canvas_len;
+        const overviewScaleY = overviewCanvas.height / procedure_canvas_len;
+        const actualOverviewScale = Math.min(overviewScaleX, overviewScaleY);
+
+        // Calculate offset used in drawOverviewCanvas to map mouse position correctly
+        const offsetX = (overviewCanvas.width / actualOverviewScale - procedure_canvas_len) / 2;
+        const offsetY = (overviewCanvas.height / actualOverviewScale - procedure_canvas_len) / 2;
+
+        // Convert mouse position on overview canvas to scaled world coordinates
+        const scaledWorldMouseX = (mouseX / actualOverviewScale) - offsetX;
+        const scaledWorldMouseY = (mouseY / actualOverviewScale) - offsetY;
+
+        // Calculate the actual position of the slip rect on the overview's *scaled world*
+        const slipRectWorldX = -procedurePan.x / procedureZoom;
+        const slipRectWorldY = -procedurePan.y / procedureZoom;
+        const slipRectWorldWidth = procedureCanvas.width / procedureZoom;
+        const slipRectWorldHeight = procedureCanvas.height / procedureZoom;
+
+        // Check if mouse is within the slip rect in the scaled world coordinates
+        if (scaledWorldMouseX >= slipRectWorldX && scaledWorldMouseX <= slipRectWorldX + slipRectWorldWidth &&
+            scaledWorldMouseY >= slipRectWorldY && scaledWorldMouseY <= slipRectWorldY + slipRectWorldHeight) {
+            isDraggingOverviewRect = true;
+            overviewDragLastX = mouseX; // Store raw mouse coordinates
+            overviewDragLastY = mouseY;
+            overviewCanvas.style.cursor = 'grabbing';
+        }
+    }
+
+    function handleOverviewMouseMove(e) {
+        if (!isDraggingOverviewRect) return;
+
+        const rect = overviewCanvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const dx = mouseX - overviewDragLastX;
+        const dy = mouseY - overviewDragLastY;
+
+        const overviewScaleX = overviewCanvas.width / procedure_canvas_len;
+        const overviewScaleY = overviewCanvas.height / procedure_canvas_len;
+        const actualOverviewScale = Math.min(overviewScaleX, overviewScaleY);
+
+        // Convert movement on overview canvas back to procedure canvas world coordinates
+        // If the slip rect moves right on the overview (dx > 0), it means the *view* in the procedure canvas
+        // moves right. To achieve this, the `procedurePan.x` (which shifts the world relative to the canvas)
+        // needs to become more negative.
+        procedurePan.x -= (dx / actualOverviewScale) * procedureZoom;
+        procedurePan.y -= (dy / actualOverviewScale) * procedureZoom;
+
+        clampProcedurePan(); // Apply clamping to keep pan within limits
+        
+        overviewDragLastX = mouseX;
+        overviewDragLastY = mouseY;
+
+        drawProcedureCanvas();
+        drawOverviewCanvas();
+    }
+
+    function handleOverviewMouseUp() {
+        isDraggingOverviewRect = false;
+        overviewCanvas.style.cursor = 'default'; // Reset cursor
+    }
 
     // --- logic for display tools on hover in the middle panel --- -----------------------------------------------------------------------------
     let hideTimeout = null; // To manage delayed hiding of the popup
@@ -1156,11 +1658,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Custom Context Menu Actions ---
+    // --- Node Context Menu Actions ---
     contextDeleteNodeBtn.addEventListener('click', () => {
-        if (selectedNode) {
+        if (selectedNode) { // If a single node was selected by right-click
             procedureNodes = procedureNodes.filter(node => node !== selectedNode);
+            // Also remove connections associated with this node
+            connections = connections.filter(conn => conn.sourceNodeId !== selectedNode.id && conn.targetNodeId !== selectedNode.id);
             selectedNode = null;
+            selectedNodes = []; // Clear any multi-selection as well
+            selectedConnection = null; // Clear connection selection
+            drawProcedureCanvas();
+            drawOverviewCanvas();
+            nodeContextMenu.classList.add('hidden');
+        } else if (selectedNodes.length > 0) { // If multiple nodes are selected
+            const selectedNodeIds = new Set(selectedNodes.map(node => node.id));
+            procedureNodes = procedureNodes.filter(node => !selectedNodeIds.has(node.id));
+            // Also remove connections associated with any of the deleted nodes
+            connections = connections.filter(conn => !selectedNodeIds.has(conn.sourceNodeId) && !selectedNodeIds.has(conn.targetNodeId));
+            selectedNodes = []; // Clear selection
+            selectedConnection = null; // Clear connection selection
             drawProcedureCanvas();
             drawOverviewCanvas();
             nodeContextMenu.classList.add('hidden');
@@ -1168,18 +1684,33 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     contextCopyNodeBtn.addEventListener('click', () => {
-        if (selectedNode) {
+        if (selectedNode) { // If a single node was selected by right-click
             clipboardNode = { ...selectedNode };
             clipboardNode.id = Date.now();
             clipboardNode.x += 20;
             clipboardNode.y += 20;
             console.log('Node copied to clipboard:', clipboardNode);
             nodeContextMenu.classList.add('hidden');
+        } else if (selectedNodes.length > 0) { // If multiple nodes are selected
+            // For simplicity, copy only the first selected node for now
+            // To copy all, you'd iterate and store an array of cloned nodes in clipboardNode
+            clipboardNode = { ...selectedNodes[0] };
+            clipboardNode.id = Date.now();
+            clipboardNode.x += 20;
+            clipboardNode.y += 20;
+            console.log('First selected node copied to clipboard:', clipboardNode);
+            nodeContextMenu.classList.add('hidden');
         }
     });
 
     function handleProcedureCanvasContextMenu(e) {
         e.preventDefault();
+
+        // Hide any other context menus
+        nodeContextMenu.classList.add('hidden');
+        canvasContextMenu.classList.add('hidden');
+        hoveredPortInfo = null; // Clear hovered state when context menu appears
+        drawProcedureCanvas(); // Redraw to reflect no hover state
 
         const mousePos = getProcedureMousePos(procedureCanvas, e);
         const worldMousePos = procedureCanvasToWorldCoords(mousePos.x, mousePos.y);
@@ -1190,27 +1721,262 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         if (selectedNode) {
+            // If right-clicked on a node, set it as the *single* selected node for context menu operations
+            // This might override a multi-selection if you right-click a node that wasn't part of it,
+            // or if you right-click a node that *is* part of it, it ensures `selectedNode` is set correctly.
+            // Consider if you want right-clicking an already selected node in a group to act on the group.
+            if (!selectedNodes.includes(selectedNode)) {
+                selectedNodes = [selectedNode]; // Clear multi-selection and select just this one
+            }
+            selectedConnection = null; // Clear connection selection if right-clicking a node
+            drawProcedureCanvas(); // To highlight the clicked node
+
             nodeContextMenu.style.left = `${e.clientX}px`;
             nodeContextMenu.style.top = `${e.clientY}px`;
             nodeContextMenu.classList.remove('hidden');
-            drawProcedureCanvas();
         } else {
-            nodeContextMenu.classList.add('hidden');
+            // If right-clicked on empty canvas, show canvas-specific context menu
+            canvasContextMenu.style.left = `${e.clientX}px`;
+            canvasContextMenu.style.top = `${e.clientY}px`;
+            canvasContextMenu.classList.remove('hidden');
         }
     }
 
-    // Hide context menu if clicking anywhere else
+    // Hide context menus if clicking anywhere else
     document.addEventListener('click', (e) => {
+        let redrawNeeded = false;
         if (!nodeContextMenu.contains(e.target)) {
-            nodeContextMenu.classList.add('hidden');
-            selectedNode = null;
-            drawProcedureCanvas();
+            if (!nodeContextMenu.classList.contains('hidden')) {
+                nodeContextMenu.classList.add('hidden');
+                redrawNeeded = true;
+            }
+        }
+        if (!canvasContextMenu.contains(e.target)) {
+            if (!canvasContextMenu.classList.contains('hidden')) {
+                canvasContextMenu.classList.add('hidden');
+                redrawNeeded = true;
+            }
+        }
+        // If click was outside both menus, and not part of an active operation, clear hover
+        if (!isDrawingNewConnection && !isDraggingNode && !isPanningProcedureCanvas && !isDrawingSelection) {
+            if (hoveredPortInfo) {
+                hoveredPortInfo = null;
+                redrawNeeded = true;
+            }
+        }
+        if (redrawNeeded) {
+            drawProcedureCanvas(); // Redraw to remove menus and clear hover effects
         }
     });
 
+    // --- Canvas Context Menu Actions ---
+    contextPanModeBtn.addEventListener('click', () => {
+        currentProcedureMode = 'pan';
+        updateProcedureCanvasCursor();
+        canvasContextMenu.classList.add('hidden');
+        selectedNodes = []; // Clear selection when switching modes
+        selectedConnection = null;
+        drawProcedureCanvas();
+    });
 
+    contextSelectModeBtn.addEventListener('click', () => {
+        currentProcedureMode = 'select';
+        updateProcedureCanvasCursor();
+        canvasContextMenu.classList.add('hidden');
+        selectedNodes = []; // Clear selection when switching modes
+        selectedConnection = null;
+        drawProcedureCanvas();
+    });
 
+    contextClearSelectionBtn.addEventListener('click', () => {
+        selectedNodes = [];
+        selectedConnection = null;
+        drawProcedureCanvas();
+        canvasContextMenu.classList.add('hidden');
+    });
 
+    contextDeleteAllConnectionsBtn.addEventListener('click', () => {
+        connections = []; // Clear all connections
+        selectedConnection = null; // Ensure no connection is selected
+        drawProcedureCanvas();
+        canvasContextMenu.classList.add('hidden');
+    });
+
+    contextDeleteSelectedConnectionBtn.addEventListener('click', () => {
+        if (selectedConnection) {
+            connections = connections.filter(conn => conn !== selectedConnection);
+            selectedConnection = null;
+            drawProcedureCanvas();
+            canvasContextMenu.classList.add('hidden');
+        }
+    });
+
+    let init_copy_offset = 30;
+    let copy_offset = init_copy_offset;
+    // --- Keyboard Shortcuts ---
+    document.addEventListener('keydown', (e) => {
+        // Prevent shortcuts if typing in input/textarea
+        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+            return;
+        }
+
+        if (e.key === 'Delete') {
+            e.preventDefault();
+            let deletedSomething = false;
+
+            if (selectedNodes.length > 0) {
+                const nodeIdsToDelete = new Set(selectedNodes.map(node => node.id));
+                procedureNodes = procedureNodes.filter(node => !nodeIdsToDelete.has(node.id));
+                connections = connections.filter(conn => !nodeIdsToDelete.has(conn.sourceNodeId) && !nodeIdsToDelete.has(conn.targetNodeId));
+                selectedNodes = [];
+                selectedNode = null;
+                deletedSomething = true;
+            } else if (selectedConnection) { // New: Delete selected connection
+                connections = connections.filter(conn => conn !== selectedConnection);
+                selectedConnection = null;
+                deletedSomething = true;
+            }
+
+            if (deletedSomething) {
+                drawProcedureCanvas();
+                drawOverviewCanvas();
+                nodeContextMenu.classList.add('hidden'); // Close any open node menu
+                canvasContextMenu.classList.add('hidden'); // Close any open canvas menu
+            }
+        }
+
+        if ((e.ctrlKey || e.metaKey) && e.key === 'c' && selectedNodes.length > 0) {
+            e.preventDefault();
+            copy_offset = init_copy_offset;
+            clipboardNode = selectedNodes.map(node => ({ ...node, id: Date.now() + Math.random() })); // Give new unique IDs
+            console.log('Nodes copied via keyboard:', clipboardNode);
+        }
+
+        if ((e.ctrlKey || e.metaKey) && e.key === 'v' && clipboardNode && clipboardNode.length > 0) {
+            e.preventDefault();
+            const newNodes = clipboardNode.map(node => ({
+                ...node,
+                id: Date.now() + Math.random(), // Ensure unique ID for pasted node
+                x: node.x + copy_offset,
+                y: node.y + copy_offset
+            }));
+            
+            // Add new nodes to procedureNodes
+            newNodes.forEach(newNode => procedureNodes.push(newNode));
+            
+            // Select the newly pasted nodes
+            selectedNodes = newNodes;
+            selectedNode = newNodes[0]; // Set first pasted node as primary selected (optional)
+            selectedConnection = null; // Clear connection selection when pasting nodes
+            
+            copy_offset += init_copy_offset;
+            drawProcedureCanvas();
+            drawOverviewCanvas();
+            console.log('Nodes pasted via keyboard:', newNodes);
+        }
+
+        // Keyboard shortcuts to switch modes (Optional but helpful)
+        if (e.key === 'p' || e.key === 'P') { // 'p' for Pan mode
+            currentProcedureMode = 'pan';
+            updateProcedureCanvasCursor();
+            selectedNodes = [];
+            selectedConnection = null;
+            drawProcedureCanvas();
+            e.preventDefault();
+        }
+        if (e.key === 's' || e.key === 'S') { // 's' for Select mode
+            currentProcedureMode = 'select';
+            updateProcedureCanvasCursor();
+            selectedNodes = [];
+            selectedConnection = null;
+            drawProcedureCanvas();
+            e.preventDefault();
+        }
+
+        // New: Shortcut for overview toggle
+        if (e.key === 'o' || e.key === 'O') {
+            e.preventDefault();
+            overviewWindow.classList.toggle('hidden');
+            toggleOverviewBtn.textContent = overviewWindow.classList.contains('hidden') ? '▲' : '▼';
+            if (!overviewWindow.classList.contains('hidden')) {
+                resizeProcedureCanvas();
+            }
+        }
+    });
+
+    // --- AI Assistant Logic ---
+    generateInsightBtn.addEventListener('click', askAI);
+
+    async function askAI() {
+        if (!selectedNode) {
+            aiResponseOutput.textContent = "Please select a node first to ask the AI.";
+            return;
+        }
+
+        const userPrompt = aiPromptInput.value.trim();
+        if (!userPrompt) {
+            aiResponseOutput.textContent = "Please enter a question for the AI.";
+            return;
+        }
+
+        aiLoadingIndicator.classList.remove('hidden');
+        aiResponseOutput.textContent = ''; // Clear previous response
+
+        const nodeInfo = `Selected Node: Type=${selectedNode.type}, Text=${selectedNode.text}.`;
+        const fullPrompt = `Based on the following node information: "${nodeInfo}" and the user's question: "${userPrompt}". Provide a concise and helpful insight or suggestion.`;
+
+        let chatHistory = [];
+        chatHistory.push({ role: "user", parts: [{ text: fullPrompt }] });
+        const payload = { contents: chatHistory };
+        const apiKey = ""; // Canvas will automatically provide this at runtime
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+        let retries = 0;
+        const maxRetries = 5;
+        const baseDelay = 1000; // 1 second
+
+        while (retries < maxRetries) {
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        aiResponseOutput.textContent = result.candidates[0].content.parts[0].text;
+                    } else {
+                        aiResponseOutput.textContent = "AI response format unexpected.";
+                        console.error("AI response format unexpected:", result);
+                    }
+                    break; // Exit loop on success
+                } else if (response.status === 429) { // Too Many Requests
+                    retries++;
+                    const delay = baseDelay * Math.pow(2, retries - 1); // Exponential backoff
+                    console.warn(`Rate limit hit, retrying in ${delay / 1000}s... (Attempt ${retries}/${maxRetries})`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                } else {
+                    aiResponseOutput.textContent = `Error: ${response.status} ${response.statusText}`;
+                    console.error("API error:", response);
+                    break; // Exit loop on other errors
+                }
+            } catch (error) {
+                aiResponseOutput.textContent = `Network Error: ${error.message}`;
+                console.error("Fetch error:", error);
+                break; // Exit loop on network errors
+            }
+        }
+
+        if (retries === maxRetries) {
+            aiResponseOutput.textContent = "Failed to get AI response after multiple retries due to rate limiting or network issues. Please try again later.";
+        }
+
+        aiLoadingIndicator.classList.add('hidden');
+    }
 
 
     // --- Initial Setup ---
@@ -1220,6 +1986,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     // Set initial active tool for image viewer
     setActiveTool('default');
+    // Ensure overview is initially hidden if you prefer that
+    overviewWindow.classList.add('hidden'); // Ensure it starts hidden
+    toggleOverviewBtn.textContent = overviewWindow.classList.contains('hidden') ? '▲' : '▼';
     // initial procedure canvas draw
     resizeProcedureCanvas();
 
@@ -1232,8 +2001,8 @@ document.addEventListener('DOMContentLoaded', () => {
     procedureCanvas.addEventListener('drop', handleProcedureCanvasDrop);      
     procedureCanvas.addEventListener('contextmenu', handleProcedureCanvasContextMenu);
 
-
+    // Initial cursor update
+    updateProcedureCanvasCursor();
 
     // This is the end of the code 
 });
-

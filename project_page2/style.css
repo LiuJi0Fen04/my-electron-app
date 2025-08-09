@@ -457,3 +457,8 @@ html, body {
 #clear-nodes-btn:hover {
     background-color: #d15a6b;
 }
+
+
+.test_color{
+    border-color: #e6c07b
+}
