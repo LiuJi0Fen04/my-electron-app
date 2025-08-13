@@ -746,9 +746,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedConnection = null; // Currently selected connection
     let hoveredPortInfo = null; // Tracks which port is currently hovered { node: node_obj, port: '...' }
 
-    const tools = document.querySelectorAll('.tool');
-    const addNodeButtons = document.querySelectorAll('.add-nodes-button');
-    const clearNodeBtn = document.getElementById('clear-nodes-btn')
+    // const tools = document.querySelectorAll('.tool'); // This will be dynamic now
+    // const addNodeButtons = document.querySelectorAll('.add-nodes-button') // This variable is not used anywhere and can be removed
+    const clearNodeBtn = document.getElementById('clear-nodes-btn') // This variable is not used anywhere and can be removed
     const nodeContextMenu = document.getElementById('node-context-menu');
     const contextDeleteNodeBtn = document.getElementById('context-delete-node');
     const contextCopyNodeBtn = document.getElementById('context-copy-node');
@@ -1042,17 +1042,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getNodeColor(type) {
-        switch (type) {
-            case 'Camera': return '#98c379';
-            case 'Folder': return '#98c379';
-            case 'Sharpness': return '#e6c07b';
-            case 'Blur': return '#e6c07b';
-            case 'Threshold': return '#e6c07b';
-            case 'Line Detection': return '#61afef';
-            case 'Circle Detection': return '#61afef';
-            case 'If': return '#e06c75';
-            case 'While': return '#e06c75';
-            case 'For': return '#e06c75';
+        // Normalize type name for color mapping
+        const normalizedType = type.toLowerCase().replace(/\s/g, '_');
+        switch (normalizedType) {
+            case 'camera': return '#98c379';
+            case 'folder': return '#98c379';
+            case 'sharpness': return '#e6c07b';
+            case 'blur': return '#e6c07b';
+            case 'resize': return '#e6c07b';
+            case 'threshold': return '#e6c07b';
+            case 'line_detection': return '#61afef';
+            case 'circle_detection': return '#61afef';
+            case 'if': return '#e06c75';
+            case 'while': return '#e06c75';
+            case 'for': return '#e06c75';
             default: return '#abb2bf';
         }
     }
@@ -1168,6 +1171,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleProcedureCanvasMouseDown(e) {
         nodeContextMenu.classList.add('hidden');
         canvasContextMenu.classList.add('hidden'); // Hide canvas context menu
+
+        // Prevent showing default context menu on right click for main canvas
+        if (e.button === 2) {
+            return;
+        }
 
         const mousePos = getProcedureMousePos(procedureCanvas, e);
         const worldMousePos = procedureCanvasToWorldCoords(mousePos.x, mousePos.y);
@@ -1512,11 +1520,154 @@ document.addEventListener('DOMContentLoaded', () => {
         overviewCanvas.style.cursor = 'default'; // Reset cursor
     }
 
-    // --- logic for display tools on hover in the middle panel --- -----------------------------------------------------------------------------
+    // --- Dynamic Tool Loading and Interaction Logic ---
     let hideTimeout = null; // To manage delayed hiding of the popup
     let activePopup = null; // To keep track of the currently displayed popup
 
-    // middlePanel event listeners for dropping
+    // Function to set up event listeners for dynamically created tools
+    function setupToolEventListeners() {
+        const tools = document.querySelectorAll('.tool'); // Select all dynamically created tools
+
+        tools.forEach(tool => {
+            // When mouse enters a main tool
+            tool.addEventListener('mouseenter', (event) => {
+                // Clear any pending hide timeouts to prevent immediate disappearance
+                if (hideTimeout) {
+                    clearTimeout(hideTimeout);
+                    hideTimeout = null;
+                }
+
+                // If there's an active popup from a *different* tool, remove it
+                if (activePopup && activePopup.parentElement && activePopup.dataset.parentToolId !== tool.id) {
+                    activePopup.remove();
+                    activePopup = null;
+                }
+
+                const subToolsContainer = tool.querySelector('.sub-tools-container');
+                if (subToolsContainer && !activePopup) { // Only create if no active popup or it's a new parent tool
+                    const popup = document.createElement('div');
+                    popup.classList.add('sub-tool-popup');
+                    popup.dataset.parentToolId = tool.id; // Store parent tool ID for differentiation
+
+                    // Clone each sub-tool from the hidden template and append to the popup
+                    Array.from(subToolsContainer.children).forEach(subTool => {
+                        const clonedSubTool = subTool.cloneNode(true); // Deep clone the element
+
+                        // IMPORTANT: Re-attach drag listeners to the cloned elements
+                        clonedSubTool.addEventListener('dragstart', (e) => {
+                            e.dataTransfer.setData('text/plain', e.target.textContent); // Use text content as tool type
+                            e.dataTransfer.effectAllowed = 'copy';
+                            e.target.classList.add('dragging');
+                        });
+                        clonedSubTool.addEventListener('dragend', (e) => {
+                            e.target.classList.remove('dragging');
+                        });
+                        popup.appendChild(clonedSubTool);
+                    });
+
+                    // Calculate vertical position of the popup relative to the middlepanel
+                    const toolRect = tool.getBoundingClientRect(); // Position of the hovered tool
+                    const middlepanelRect = middlePanel.getBoundingClientRect(); // Position of the middlepanel
+
+                    // Align the top of the popup with the top of the hovered tool
+                    // Adjust for middlepanel's own top offset
+                    let topPosition = toolRect.top - middlepanelRect.top;
+
+                    // Apply the calculated position to the popup
+                    popup.style.top = `${topPosition}px`;
+                    // popup.style.left = `${middlepanelRect.left}px`; // This makes it appear over middle panel
+                    popup.style.left = `${leftPanel.offsetWidth + leftMiddleResizer.offsetWidth}px`; // Position right of left panel
+
+                    middlePanel.appendChild(popup); // Add the popup to the middlepanel
+                    activePopup = popup; // Set this as the currently active popup
+
+                    // Add mouseleave listener to the popup itself
+                    // This allows the user to move the mouse onto the popup without it disappearing
+                    popup.addEventListener('mouseleave', () => {
+                        hideTimeout = setTimeout(() => {
+                            if (activePopup && activePopup.parentElement) {
+                                activePopup.remove();
+                                activePopup = null;
+                            }
+                        }, 100); // Small delay before hiding
+                    });
+                    // If mouse re-enters the popup, clear the hide timeout
+                    popup.addEventListener('mouseenter', () => {
+                        if (hideTimeout) {
+                            clearTimeout(hideTimeout);
+                            hideTimeout = null;
+                        }
+                    });
+                }
+            });
+
+            // When mouse leaves a main tool
+            tool.addEventListener('mouseleave', () => {
+                // Set a timeout to hide the popup. This delay is crucial
+                // to allow the user to move their cursor from the tool
+                // to the sub-tool popup without the popup disappearing.
+                hideTimeout = setTimeout(() => {
+                    // Only hide if the mouse hasn't re-entered the popup
+                    if (activePopup && activePopup.parentElement) {
+                        activePopup.remove();
+                        activePopup = null;
+                    }
+                }, 100); // Small delay (e.g., 100 milliseconds)
+            });
+        });
+    }
+
+    // Function to dynamically load tools from module.json
+    async function loadToolsIntoLeftPanel() {
+        try {
+            const response = await fetch('module.json');
+            const data = await response.json();
+            const moduleData = data.module;
+
+            moduleData.forEach(toolCategory => {
+                for (const categoryName in toolCategory) {
+                    const toolsArray = toolCategory[categoryName];
+
+                    // Create the main tool div
+                    const toolDiv = document.createElement('div');
+                    toolDiv.classList.add('tool');
+                    // Normalize the ID for consistency (e.g., "image_capture" becomes "image-capture-tool")
+                    toolDiv.id = `${categoryName.replace(/_/g, '-')}-tool`;
+
+                    // Create the h3 for the category title (e.g., "Image Capture")
+                    const h3 = document.createElement('h3');
+                    h3.textContent = categoryName.replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '); // Capitalize each word
+
+                    // Create the sub-tools container (initially hidden)
+                    const subToolsContainer = document.createElement('div');
+                    subToolsContainer.classList.add('sub-tools-container');
+
+                    // Populate sub-tools
+                    toolsArray.forEach(subToolName => {
+                        const subToolDiv = document.createElement('div');
+                        subToolDiv.classList.add('sub-tool');
+                        subToolDiv.setAttribute('draggable', 'true');
+                        // Use original subToolName for data-tool for consistency with getNodeColor
+                        subToolDiv.setAttribute('data-tool', subToolName); 
+                        subToolDiv.textContent = subToolName.replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '); // Capitalize each word
+
+                        subToolsContainer.appendChild(subToolDiv);
+                    });
+
+                    toolDiv.appendChild(h3);
+                    toolDiv.appendChild(subToolsContainer);
+                    leftPanel.appendChild(toolDiv);
+                }
+            });
+            setupToolEventListeners(); // Attach event listeners after tools are created
+        } catch (error) {
+            console.error('Error loading tools from module.json:', error);
+            // Fallback: If loading fails, ensure the panel is not empty or show an error message
+            leftPanel.innerHTML += '<p style="color: red;">Failed to load tools. Please check module.json.</p>';
+        }
+    }
+
+    // middlePanel event listeners for dropping (remains the same)
     middlePanel.addEventListener('dragover', (event) => {
         event.preventDefault(); // Essential to allow a drop
         event.dataTransfer.dropEffect = 'copy'; // Visual feedback for 'copy' operation
@@ -1539,95 +1690,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // middlePanel.appendChild(newToolElement); // Add the new tool to the middlePanel
     });
 
-    tools.forEach(tool => {
-        // When mouse enters a main tool
-        tool.addEventListener('mouseenter', (event) => {
-            // Clear any pending hide timeouts to prevent immediate disappearance
-            if (hideTimeout) {
-                clearTimeout(hideTimeout);
-                hideTimeout = null;
-            }
-
-            // If there's an active popup from a *different* tool, remove it
-            if (activePopup && activePopup.parentElement) {
-                activePopup.remove();
-                activePopup = null;
-            }
-
-            const subToolsContainer = tool.querySelector('.sub-tools-container');
-            if (subToolsContainer) {
-                const popup = document.createElement('div');
-                popup.classList.add('sub-tool-popup');
-
-                // Clone each sub-tool from the hidden template and append to the popup
-                Array.from(subToolsContainer.children).forEach(subTool => {
-                    const clonedSubTool = subTool.cloneNode(true); // Deep clone the element
-
-                    // IMPORTANT: Re-attach drag listeners to the cloned elements
-                    clonedSubTool.addEventListener('dragstart', (e) => {
-                        e.dataTransfer.setData('text/plain', e.target.textContent);
-                        e.dataTransfer.effectAllowed = 'copy';
-                        e.target.classList.add('dragging');
-                    });
-                    clonedSubTool.addEventListener('dragend', (e) => {
-                        e.target.classList.remove('dragging');
-                    });
-                    popup.appendChild(clonedSubTool);
-                });
-
-                // Calculate vertical position of the popup relative to the middlepanel
-                const toolRect = tool.getBoundingClientRect(); // Position of the hovered tool
-                const middlepanelRect = middlePanel.getBoundingClientRect(); // Position of the middlepanel
-
-                // Align the top of the popup with the top of the hovered tool
-                // Adjust for middlepanel's own top offset
-                let topPosition = toolRect.top - middlepanelRect.top;
-                let leftPosition = middlepanelRect.left;
-
-                // Optional: Add a small vertical offset for visual spacing
-                topPosition += 0;
-
-                // Apply the calculated position to the popup
-                popup.style.top = `${topPosition}px`;
-                popup.style.left = `${leftPosition}px`; // Fixed left offset from the middlepanel's left edge
-
-                middlePanel.appendChild(popup); // Add the popup to the middlepanel
-                activePopup = popup; // Set this as the currently active popup
-
-                // Add mouseleave listener to the popup itself
-                // This allows the user to move the mouse onto the popup without it disappearing
-                popup.addEventListener('mouseleave', () => {
-                    hideTimeout = setTimeout(() => {
-                        if (activePopup && activePopup.parentElement) {
-                            activePopup.remove();
-                            activePopup = null;
-                        }
-                    }, 100); // Small delay before hiding
-                });
-                // If mouse re-enters the popup, clear the hide timeout
-                popup.addEventListener('mouseenter', () => {
-                    if (hideTimeout) {
-                        clearTimeout(hideTimeout);
-                        hideTimeout = null;
-                    }
-                });
-            }
-        });
-
-        // When mouse leaves a main tool
-        tool.addEventListener('mouseleave', () => {
-            // Set a timeout to hide the popup. This delay is crucial
-            // to allow the user to move their cursor from the tool
-            // to the sub-tool popup without the popup disappearing.
-            hideTimeout = setTimeout(() => {
-                // Only hide if the mouse hasn't re-entered the popup
-                if (activePopup && activePopup.parentElement) {
-                    activePopup.remove();
-                    activePopup = null;
-                }
-            }, 100); // Small delay (e.g., 100 milliseconds)
-        });
-    });
 
     // NEW: Dragover handler for procedure canvas
     function handleProcedureCanvasDragOver(e) {
@@ -1644,8 +1706,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const newNode = {
                 id: Date.now(),
-                type: nodeType,
-                text: `${nodeType.charAt(0).toUpperCase() + nodeType.slice(1)} ${procedureNodes.length + 1}`,
+                type: nodeType, // Use the raw nodeType for internal logic
+                text: `${nodeType.charAt(0).toUpperCase() + nodeType.slice(1).replace(/_/g, ' ')}`, // Capitalize first letter and replace underscores for display
                 x: worldDropPos.x - (NODE_WIDTH / 2),
                 y: worldDropPos.y - (NODE_HEIGHT / 2),
                 width: NODE_WIDTH,
@@ -1991,6 +2053,9 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleOverviewBtn.textContent = overviewWindow.classList.contains('hidden') ? '▲' : '▼';
     // initial procedure canvas draw
     resizeProcedureCanvas();
+
+    // Call the function to load tools dynamically
+    loadToolsIntoLeftPanel();
 
     // Attach all procedure canvas interaction listeners
     procedureCanvas.addEventListener('wheel', handleProcedureCanvasWheel);
