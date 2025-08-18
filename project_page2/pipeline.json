@@ -1,0 +1,96 @@
+{
+    "pipeline": [
+      {
+        "instruction_id": 1,
+        "enable": 1,
+        "name": "input_image",
+        "type": "imagecapture",
+        "argument": {
+          "source": [ "path", "D:\\image\\paixianbuliang\\Number2603Time0518140910180.bmp" ]
+        }
+      },
+      {
+        "instruction_id": 2,
+        "enable": 1,
+        "name": "blur",
+        "type": "func",
+        "argument": {
+          "src": [ "input_image" ], 
+          "dst": [ "blured_image", "empty" ],
+          "blur_ksize": [ "blur_ksize", 5 ]
+        }
+      },
+      {
+        "instruction_id": 4,
+        "enable": 1,
+        "name": "if",
+        "type": "control",
+        "argument": {
+          "condition": "thresh_out.cols > 1",
+          "then_branch": [
+            {
+              "instruction_id": 3,
+              "enable": 1,
+              "name": "threshold",
+              "type": "func",
+              "argument": {
+                "src": [ "blured_image" ], 
+                "dst": [ "thresh_out" ],
+                "thresh": [ "thresh_val", 200 ],
+                "maxval": [ "thresh_max", 255 ]
+              }
+            }
+          ],
+          "else_branch": [
+            {
+              "instruction_id": 2,
+              "enable": 0,
+              "name": "blur",
+              "type": "func",
+              "argument": {
+                "src": [ "blured_image" ], 
+                "dst": [ "thresh_out", "empty" ],
+                "blur_ksize": [ "blur_ksize", 50 ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "instruction_id": 5,
+        "enable": 0,
+        "name": "for",
+        "type": "control",
+        "argument": {
+          "start": 0,
+          "end": 10,
+          "step": 1,
+          "body": [
+            {
+              "instruction_id": 2,
+              "enable": 0,
+              "name": "blur",
+              "type": "func",
+              "argument": {
+                "src": [ "blured_image" ], 
+                "dst": [ "blured_image", "empty" ],
+                "blur_ksize": [ "blur_ksize", 50 ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "instruction_id": 6,
+        "enable": 0,
+        "name": "while",
+        "type": "control",
+        "argument": {
+          "condition": "thresh_val < 1.0",
+          "body": [
+          ]
+        }
+      }
+    ]
+  }
+  

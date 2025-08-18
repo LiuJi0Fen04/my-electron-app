@@ -1,0 +1,69 @@
+{
+    "blur": [
+      {
+        "table1": "input&output",
+        "src": [
+          {
+            "value": "input_image",
+            "widget": "text",
+            "type": "input"
+          }
+        ],
+        "dst": [
+          {
+            "value": "blured_image",
+            "widget": "text",
+            "type": "output"
+          }
+        ]
+      },
+      {
+        "table2": "parameter adjustment",
+        "blur_ksize": [
+          {
+            "value": "blur_ksize",
+            "widget": "number",
+            "type": "param"
+          }
+        ]
+      },
+      {
+        "table3": "result filter",
+        "condition": [
+          {
+            "value": "cols > 4",
+            "widget": "textarea",
+            "type": "fiter"
+          }
+        ]
+      }
+    ],
+    "resize": [
+      {
+        "table1": "input&output"
+      },
+      {
+        "table2": "parameter adjustment"
+      },
+      {
+        "table3": "result filter"
+      }
+    ]
+  }
+  
+  
+  
+  
+  
+  //控件类型	标签示例	用途说明
+  //文本框	<input type="text">	输入单行文本
+  //密码框	<input type="password">	输入密码，内容隐藏
+  //多行文本框	<textarea>	输入多行文本
+  //复选框	<input type="checkbox">	多选项选择
+  //单选按钮	<input type="radio">	单选项选择
+  //下拉菜单	<select>	选择一个或多个选项
+  //文件上传	<input type="file">	上传本地文件
+  //数字输入框	<input type="number">	输入数字
+  //日期选择器	<input type="date">	选择日期
+  //范围滑块	<input type="range">	拖动选择数值范围
+  //颜色选择器	<input type="color">	选择颜色

@@ -13,7 +13,6 @@
 				"threshold" 
 			] 
 		},
-		
 		{
 			"Measure": [
 				"line_detection",
