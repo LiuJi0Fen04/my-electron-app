@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline';">
+    <title>Node Details</title>
+    <!-- You can link to your main style.css or create a new one for just this window -->
+    <link rel="stylesheet" href="node_detail_style.css">
+</head>
+<body>
+    <div class="title-bar">
+        <span id="node-title" class="title-text">Node Details</span>
+        <button class="close-button" id="close-detail-window">&times;</button>
+    </div>
+
+    <div class="content-area">
+        <div class="tabs-container" id="tabs-container">
+            <!-- Tab buttons will be dynamically generated here -->
+        </div>
+        <div class="tab-content-display" id="tab-content-display">
+            <!-- Tab content panels will be dynamically generated here -->
+        </div>
+    </div>
+
+    <script src="./node_detail_renderer.js"></script>
+</body>
+</html>

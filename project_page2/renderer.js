@@ -2041,6 +2041,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
+
+
     // --- Initial Setup ---
     window.addEventListener('resize', () => {
         resizeImageCanvas();
@@ -2065,7 +2067,27 @@ document.addEventListener('DOMContentLoaded', () => {
     procedureCanvas.addEventListener('dragover', handleProcedureCanvasDragOver); 
     procedureCanvas.addEventListener('drop', handleProcedureCanvasDrop);      
     procedureCanvas.addEventListener('contextmenu', handleProcedureCanvasContextMenu);
+    // --- Double-click Handler for Nodes (NEW) ---
+    procedureCanvas.addEventListener('dblclick', (e) => {
+        const mousePos = getProcedureMousePos(procedureCanvas, e);
+        const worldMousePos = procedureCanvasToWorldCoords(mousePos.x, mousePos.y);
+        const clickedNode = procedureNodes.find(node =>
+            worldMousePos.x >= node.x && worldMousePos.x <= node.x + node.width &&
+            worldMousePos.y >= node.y && worldMousePos.y <= node.y + node.height
+        );
 
+
+        if (clickedNode) {
+            selectedNode = clickedNode; // Ensure the double-clicked node is selected
+            console.log('Double-clicked node:', selectedNode.name, selectedNode.type);
+            // Request main process to open the detail window
+            if (window.electronAPI && window.electronAPI.openNodeDetail) {
+                window.electronAPI.openNodeDetail(selectedNode.type);
+            } else {
+                console.error('electronAPI.openNodeDetail not available. Is preload.js configured correctly?');
+            }
+        }
+    });
     // Initial cursor update
     updateProcedureCanvasCursor();
 

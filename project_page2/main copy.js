@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron'); // Import dialog
 const path = require('path');
-// const fs = require('node:fs/promises'); // For reading directory
-const fs = require('fs');
+const fs = require('fs'); // Keep fs for synchronous reading of JSON
+
 function createWindow() {
     const mainWindow = new BrowserWindow({
         width: 1200, // Slightly wider for the new content
@@ -26,7 +26,6 @@ function createWindow() {
     });
 
     ipcMain.on('open-settings-window', () => {
-        // In a real app, you'd open a new BrowserWindow for settings here
         console.log('Open settings window command received.');
         dialog.showMessageBox(mainWindow, {
             type: 'info',
@@ -37,30 +36,22 @@ function createWindow() {
 
     // NEW IPC Handler for opening image folder
     ipcMain.handle('open-image-folder', async (event) => {
-        const result = await dialog.showOpenDialog(mainWindow, {
+        const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
             properties: ['openDirectory']
         });
-
-        if (!result.canceled && result.filePaths.length > 0) {
-            const folderPath = result.filePaths[0];
-            try {
-                const imageFiles = findImageFiles(folderPath);
-                return { success: true, folderPath, images: imageFiles };
-                // mainWindow.webContents.send('load-images', folderPath, imageFiles);
-            } catch (error) {
-                console.error('Failed to read directory or files:', error);
-                return { success: false, error: error.message };
-            }
+        if (!canceled && filePaths.length > 0) {
+            const folderPath = filePaths[0];
+            const imageFiles = findImageFiles(folderPath);
+            return imageFiles.map(file => path.join(folderPath, file)); // Return full paths
         }
-        return { success: false, canceled: true };
+        return [];
     });
-
 
     // NEW IPC Handler for opening node detail window
     ipcMain.on('open-node-detail-window', (event, nodeType) => {
         let nodeDetailWindow = new BrowserWindow({
-            width: 450,
-            height: 300,
+            width: 600,
+            height: 700,
             frame: false, // Make it frameless as requested
             webPreferences: {
                 preload: path.join(__dirname, 'node_detail_preload.js'), // New preload script
@@ -71,7 +62,6 @@ function createWindow() {
             modal: false, // Can interact with parent window
             show: false // Don't show until content is ready
         });
-        // nodeDetailWindow.webContents.openDevTools(); // Uncomment for debugging
 
         nodeDetailWindow.loadFile(path.join(__dirname, 'node_detail_window.html')); // Load new HTML
 
@@ -88,9 +78,8 @@ function createWindow() {
             nodeDetailWindow.close();
             return;
         }
+
         const specificModuleData = { [nodeType]: moduleDescriptorData[nodeType] };
-        // console.log(moduleDescriptorData);
-        // console.log(specificModuleData);
 
         nodeDetailWindow.once('ready-to-show', () => {
             nodeDetailWindow.show();
@@ -106,35 +95,14 @@ function createWindow() {
             nodeDetailWindow = null;
         });
     });
-
-    // FIX: Add logic to close the window that sent the message
-    ipcMain.on('close-node-detail-window', (event) => {
-        const webContents = event.sender;
-        const browserWindow = BrowserWindow.fromWebContents(webContents);
-        if (browserWindow) {
-            browserWindow.close();
-        }
-    });
 }
 
-
-
-// find all supported image files in the folder 
 function findImageFiles(folderPath) {
     const supportedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'];
     const files = fs.readdirSync(folderPath);
-    // 1 Array<string> → This means the method applies to an array of strings.
-    // 2 filter(...) → The method filters elements based on a condition.
-    // 3 predicate: (value, index, array) => unknown → The filtering function:
-    //    3.1 value: string → The current item in the array.
-    //    3.2 index: number → The item's position in the array.
-    //    3.3 array: string[] → The full array being filtered.(which can be usefull for comparisons or calculations that involve multiple elements)
-    //    3.4 Returns: unknown, but typically true or false. If true, the item is included in the result.
-    // 4 thisArg?: any → Optional. Specifies this context for the predicate function.
-    // 5 Returns: string[] → The filtered array with only the items that satisfied the condition.
     return files.filter(file => {
-        const extension = path.extname(file).toLowerCase(); // return the extension name of the path 
-        return supportedExtensions.includes(extension); 
+        const extension = path.extname(file).toLowerCase();
+        return supportedExtensions.includes(extension);
     });
 }
 
@@ -153,3 +121,4 @@ app.on('window-all-closed', () => {
         app.quit();
     }
 });
+

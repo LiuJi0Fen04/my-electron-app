@@ -1,0 +1,172 @@
+body {
+    background-color: #282c34; /* Match main app background */
+    color: #abb2bf; /* Match main app text color */
+    font-family: sans-serif;
+    padding: 0; /* Remove body padding as title bar will cover top */
+    overflow: hidden; /* Prevent body scroll, content area will scroll */
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Full viewport height */
+}
+
+/* NEW: Title Bar for Dragging */
+.title-bar {
+    -webkit-app-region: drag; /* Makes this area draggable */
+    height: 30px; /* Standard height for title bars */
+    background-color: #3e4451; /* Darker background for distinction */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #abb2bf;
+    font-weight: bold;
+    position: relative; /* For positioning close button */
+    padding: 0 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.title-text {
+    -webkit-app-region: no-drag; /* Ensure text is not part of drag area */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: calc(100% - 60px); /* Adjust based on close button width */
+}
+
+/* Close button with no-drag */
+.close-button {
+    -webkit-app-region: no-drag; /* Make button clickable */
+    position: absolute;
+    top: 0px; /* Align to top of title-bar */
+    right: 0px; /* Align to right of title-bar */
+    background: none;
+    border: none;
+    color: #abb2bf;
+    font-size: 24px;
+    cursor: pointer;
+    transition: color 0.2s ease, background-color 0.2s ease;
+    width: 30px; /* Make it square */
+    height: 30px; /* Make it square */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+.close-button:hover {
+    color: #ffffff;
+    background-color: #e06c75; /* Reddish on hover */
+}
+
+/* Content area for tabs and their display */
+.content-area {
+    flex-grow: 1; /* Take remaining vertical space */
+    display: flex;
+    flex-direction: column;
+    padding: 15px; /* Add padding to the content area */
+    overflow: hidden; /* Contains overflowing tab content */
+}
+
+/* NEW: Tabs styling */
+.tabs-container {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 15px; /* Space between tabs and content */
+    border-bottom: 1px solid #3e4451;
+    padding-bottom: 5px;
+    flex-wrap: wrap; /* Allow tabs to wrap to next line if many */
+}
+
+.tab-button {
+    -webkit-app-region: no-drag; /* Ensure tab buttons are clickable */
+    background-color: #31363f;
+    color: #abb2bf;
+    border: 1px solid #61afef;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    font-size: 0.9em;
+    white-space: nowrap; /* Prevent text wrapping in tabs */
+}
+
+.tab-button:hover {
+    background-color: #4B5361;
+    transform: translateY(-1px);
+}
+
+.tab-button.active {
+    background-color: #61afef;
+    color: #282c34;
+    border-color: #61afef;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Content area for the selected tab */
+.tab-content-display {
+    flex-grow: 1; /* Take remaining space */
+    overflow-y: auto; /* Enable vertical scrolling for content */
+    padding-right: 5px; /* Prevent scrollbar from overlapping content */
+}
+
+.tab-panel {
+    display: none; /* Hidden by default */
+    padding: 10px 0; /* Padding for content inside tab panels */
+}
+.tab-panel.active {
+    display: block; /* Show active tab content */
+}
+
+/* Existing styles adapted for new layout */
+h3 {
+    color: #c678dd; /* Table header color */
+    margin-bottom: 10px;
+    margin-top: 20px;
+}
+.table-section {
+    margin-bottom: 30px;
+    padding: 15px;
+    background-color: #3e4451; /* Section background */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.input-container {
+    margin-bottom: 15px;
+}
+label {
+    display: block;
+    margin-bottom: 5px;
+    color: #abb2bf;
+    font-weight: bold;
+}
+input[type="text"],
+input[type="number"],
+textarea,
+select { /* Added select for consistency */
+    width: calc(100% - 16px); /* Adjust for padding */
+    padding: 8px;
+    border: 1px solid #61afef;
+    border-radius: 4px;
+    background-color: #31363f; /* Input background */
+    color: #abb2bf; /* Input text color */
+    box-sizing: border-box; /* Include padding in width */
+}
+textarea {
+    resize: vertical; /* Allow vertical resizing */
+}
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: #e6c07b; /* Highlight on focus */
+    box-shadow: 0 0 0 2px rgba(230, 192, 123, 0.3);
+}
+/* Specific style for checkbox/radio labels if needed */
+.input-container.checkbox-radio label {
+    display: inline-block;
+    margin-bottom: 0;
+    margin-left: 5px;
+}
+.input-container.checkbox-radio input {
+    width: auto; /* Reset width for checkboxes/radios */
+}
